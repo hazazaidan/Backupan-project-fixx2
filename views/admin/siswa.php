@@ -72,7 +72,10 @@ $daftarKelas = $daftarKelas ?? [];
                     <div class="search-wrap">
                         <i class="bi bi-search"></i>
                         <input type="text" class="search-input" id="searchInput"
-                               placeholder="Cari nama atau NIS..." oninput="filterData()">
+                               name="search_siswa"
+                               placeholder="Cari nama atau NIS..."
+                               oninput="filterData()"
+                               autocomplete="new-password">
                     </div>
                     <select class="filter-select" id="filterKelas" onchange="filterData()">
                         <option value="">Semua Kelas</option>
@@ -126,11 +129,11 @@ $daftarKelas = $daftarKelas ?? [];
         <div class="modal-body">
             <div class="form-group">
                 <label class="form-label">Nama Lengkap <span class="req">*</span></label>
-                <input type="text" class="form-control" id="add_nama" placeholder="Nama lengkap siswa">
+                <input type="text" class="form-control" id="add_nama" placeholder="Nama lengkap siswa" autocomplete="new-password">
             </div>
             <div class="form-group">
                 <label class="form-label">NIS <span class="req">*</span></label>
-                <input type="text" class="form-control" id="add_nis" placeholder="Nomor Induk Siswa">
+                <input type="text" class="form-control" id="add_nis" placeholder="Nomor Induk Siswa" autocomplete="new-password">
             </div>
             <div class="form-group">
                 <label class="form-label">Kelas <span class="req">*</span></label>
@@ -143,7 +146,7 @@ $daftarKelas = $daftarKelas ?? [];
             </div>
             <div class="form-group">
                 <label class="form-label">Password <span class="req">*</span></label>
-                <input type="password" class="form-control" id="add_password" placeholder="Password login siswa">
+                <input type="password" class="form-control" id="add_password" placeholder="Password login siswa" autocomplete="new-password">
             </div>
         </div>
         <div class="modal-footer">
@@ -169,11 +172,11 @@ $daftarKelas = $daftarKelas ?? [];
             <input type="hidden" id="edit_id">
             <div class="form-group">
                 <label class="form-label">Nama Lengkap <span class="req">*</span></label>
-                <input type="text" class="form-control" id="edit_nama">
+                <input type="text" class="form-control" id="edit_nama" autocomplete="new-password">
             </div>
             <div class="form-group">
                 <label class="form-label">NIS <span class="req">*</span></label>
-                <input type="text" class="form-control" id="edit_nis">
+                <input type="text" class="form-control" id="edit_nis" autocomplete="new-password">
             </div>
             <div class="form-group">
                 <label class="form-label">Kelas <span class="req">*</span></label>
@@ -228,7 +231,7 @@ $daftarKelas = $daftarKelas ?? [];
         </div>
         <div class="modal-footer">
             <button class="btn-secondary" onclick="closeModal('modalHapus')">Batal</button>
-            <button class="btn-danger-solid" id="btnKonfirmHapus">
+            <button class="btn-danger-solid" id="btnKonfirmHapus" onclick="konfirmHapusNow()">
                 <i class="bi bi-trash3"></i> Ya, Hapus
             </button>
         </div>
@@ -286,7 +289,6 @@ $daftarKelas = $daftarKelas ?? [];
 
 <!-- ===================== SCRIPT ===================== -->
 <script>
-// ✅ FIX: filter siswa yang tidak punya ID valid sebelum render
 let dataSiswa = <?= json_encode(array_values(array_filter(array_map(fn($s) => [
     'id'   => $s['id']    ?? '',
     'nama' => $s['nama']  ?? '-',
@@ -297,13 +299,14 @@ let dataSiswa = <?= json_encode(array_values(array_filter(array_map(fn($s) => [
 let currentPage  = 1;
 const perPage    = 8;
 let filteredData = [...dataSiswa];
-let hapusId      = null;
+
+// ✅ FIX: variable JS terpisah untuk simpan ID yang akan dihapus
+let _hapusId = '';
 
 const avatarColors = ['#4f46e5','#7c3aed','#10b981','#f59e0b','#ef4444','#0d9488','#2563eb','#db2777'];
 function getColor(nama)   { let h=0; for(let c of nama) h=(h*31+c.charCodeAt(0))%avatarColors.length; return avatarColors[h]; }
 function getInisial(nama) { return nama.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 
-// ── TOAST ─────────────────────────────────────────────────────
 function showToast(msg, type='success') {
     const wrap = document.getElementById('toastWrap');
     const t = document.createElement('div');
@@ -314,14 +317,12 @@ function showToast(msg, type='success') {
     setTimeout(()=>t.remove(), 3350);
 }
 
-// ── MODAL ──────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); });
 });
 
-// ── RENDER TABLE ───────────────────────────────────────────────
 function renderTable() {
     const start = (currentPage-1)*perPage;
     const paged = filteredData.slice(start, start+perPage);
@@ -354,7 +355,7 @@ function renderTable() {
                 <div class="action-wrap">
                     <button class="act-btn act-detail" onclick="openDetail('${s.id}')" title="Detail"><i class="bi bi-eye"></i></button>
                     <button class="act-btn act-edit"   onclick="openEdit('${s.id}')"   title="Edit"><i class="bi bi-pencil"></i></button>
-                    <button class="act-btn act-del"    onclick="openHapus('${s.id}')"  title="Hapus"><i class="bi bi-trash3"></i></button>
+                    <button class="act-btn act-del" data-id="${s.id}" onclick="openHapusBtn(this)" title="Hapus"><i class="bi bi-trash3"></i></button>
                 </div>
             </td>
         </tr>
@@ -388,7 +389,6 @@ function gotoPage(p) {
     currentPage = p; renderTable();
 }
 
-// ── FILTER ─────────────────────────────────────────────────────
 function filterData() {
     const q  = document.getElementById('searchInput').value.toLowerCase().trim();
     const kl = document.getElementById('filterKelas').value;
@@ -398,13 +398,13 @@ function filterData() {
     );
     currentPage = 1; renderTable();
 }
+
 function resetFilter() {
     document.getElementById('searchInput').value = '';
     document.getElementById('filterKelas').value = '';
     filterData();
 }
 
-// ── TAMBAH ─────────────────────────────────────────────────────
 async function simpanTambah() {
     const nama     = document.getElementById('add_nama').value.trim();
     const nis      = document.getElementById('add_nis').value.trim();
@@ -432,7 +432,6 @@ async function simpanTambah() {
     btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg"></i> Simpan';
 }
 
-// ── EDIT ───────────────────────────────────────────────────────
 function openEdit(id) {
     const s = dataSiswa.find(x=>String(x.id)===String(id));
     if (!s) { showToast('Data tidak ditemukan','error'); return; }
@@ -470,7 +469,6 @@ async function simpanEdit() {
     btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg"></i> Update';
 }
 
-// ── DETAIL ─────────────────────────────────────────────────────
 function openDetail(id) {
     const s = dataSiswa.find(x=>String(x.id)===String(id));
     if (!s) { showToast('Data tidak ditemukan','error'); return; }
@@ -487,42 +485,61 @@ function openDetail(id) {
     openModal('modalDetail');
 }
 
-// ── HAPUS ──────────────────────────────────────────────────────
-function openHapus(id) {
-    const s = dataSiswa.find(x=>String(x.id)===String(id));
-    if (!s) { showToast('Data tidak ditemukan','error'); return; }
-    hapusId = String(id);
+// ✅ FIX: simpan ID ke _hapusId (variable JS), bukan ke dataset HTML attribute
+function openHapusBtn(btn) {
+    const actualBtn = btn.closest('[data-id]');
+    const idSiswa   = actualBtn ? actualBtn.getAttribute('data-id') : null;
+    const s         = dataSiswa.find(x => String(x.id) === String(idSiswa));
+
+    if (!s || !idSiswa) {
+        showToast('Data tidak ditemukan', 'error');
+        return;
+    }
+
+    _hapusId = String(idSiswa);
     document.getElementById('hapusNama').textContent = s.nama;
-    document.getElementById('btnKonfirmHapus').onclick = konfirmHapus;
     openModal('modalHapus');
 }
 
-async function konfirmHapus() {
-    if (!hapusId) { showToast('ID tidak valid','error'); return; }
+// ✅ FIX: ambil ID dari _hapusId (variable JS), bukan dari btn.dataset
+async function konfirmHapusNow() {
+    const btn        = document.getElementById('btnKonfirmHapus');
+    const hapusIdnya = _hapusId;
 
-    const btn = document.getElementById('btnKonfirmHapus');
-    btn.disabled=true; btn.innerHTML='<i class="bi bi-hourglass-split"></i> Menghapus...';
+    if (!hapusIdnya) {
+        showToast('ID tidak valid', 'error');
+        return;
+    }
+
+    btn.disabled  = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menghapus...';
 
     try {
         const res  = await fetch('?url=admin/siswa/destroy', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ id: hapusId })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: hapusIdnya })
         });
         const json = await res.json();
+
         if (json.success) {
-            dataSiswa    = dataSiswa.filter(x=>String(x.id)!==hapusId);
-            filteredData = filteredData.filter(x=>String(x.id)!==hapusId);
+            dataSiswa    = dataSiswa.filter(x => String(x.id) !== hapusIdnya);
+            filteredData = filteredData.filter(x => String(x.id) !== hapusIdnya);
+            _hapusId = '';
             closeModal('modalHapus');
             renderTable();
-            showToast(json.message,'success');
-        } else { showToast(json.message,'error'); }
-    } catch(e) { showToast('Gagal terhubung ke server','error'); }
+            showToast(json.message, 'success');
+        } else {
+            showToast(json.message, 'error');
+        }
+    } catch(e) {
+        showToast('Gagal terhubung ke server', 'error');
+    }
 
-    btn.disabled=false; btn.innerHTML='<i class="bi bi-trash3"></i> Ya, Hapus';
-    hapusId = null;
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="bi bi-trash3"></i> Ya, Hapus';
 }
 
-// ── INIT ───────────────────────────────────────────────────────
 filteredData = [...dataSiswa];
 renderTable();
 </script>

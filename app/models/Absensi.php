@@ -118,4 +118,37 @@ class Absensi {
         }
         return $summary;
     }
+
+    // ── [BARU] Query rentang tanggal untuk halaman laporan admin ─────
+    public function getByRange(string $tglMulai, string $tglAkhir, string $kelas = '', string $status = ''): array {
+        $query = "kehadiran?tanggal=gte." . $tglMulai
+               . "&tanggal=lte." . $tglAkhir
+               . "&select=*,students(nama,nis,kelas)"
+               . "&order=tanggal.desc,waktu_masuk.desc";
+
+        if (!empty($status)) $query .= "&status=eq." . urlencode($status);
+
+        $response = Database::request("GET", $query);
+        if (empty($response) || isset($response['error'])) return [];
+
+        $result = array_map(function($row) {
+            return [
+                'id'         => $row['id']                   ?? '',
+                'tanggal'    => $row['tanggal']              ?? '-',
+                'nama'       => $row['students']['nama']     ?? '-',
+                'kelas'      => $row['students']['kelas']    ?? '-',
+                'jam_datang' => !empty($row['waktu_masuk'])  ? date('H:i', strtotime($row['waktu_masuk']))  : '-',
+                'jam_pulang' => !empty($row['waktu_pulang']) ? date('H:i', strtotime($row['waktu_pulang'])) : '-',
+                'status'     => $row['status']               ?? '-',
+                'ket'        => $row['keterangan']           ?? $row['status'] ?? '-',
+            ];
+        }, $response);
+
+        // Filter kelas di PHP (Supabase tidak support filter kolom nested join)
+        if (!empty($kelas)) {
+            $result = array_values(array_filter($result, fn($r) => $r['kelas'] === $kelas));
+        }
+
+        return $result;
+    }
 }

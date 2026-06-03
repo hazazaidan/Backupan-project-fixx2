@@ -12,7 +12,7 @@ class App {
     public function __construct() {
 
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+            session_start(); 
         }
 
         $url = $this->parseURL();
@@ -60,6 +60,7 @@ class App {
             'admin/kelas/update'      => ['AdminController', 'updateKelas'],  // ← FIX: ini yang kurang!
             'admin/kelas/destroy'     => ['AdminController', 'destroyKelas'], // ← FIX: ini yang kurang!
             'admin/laporan'           => ['AdminController', 'laporan'],
+            'admin/kehadiran/updateStatus' => ['AdminController', 'updateStatusKehadiran'],
             'admin/pengaturan'        => ['AdminController', 'pengaturan'],
             'admin/registrasi'        => ['AdminController', 'registrasi'],
             'admin/approveRegistrasi' => ['AdminController', 'approveRegistrasi'],

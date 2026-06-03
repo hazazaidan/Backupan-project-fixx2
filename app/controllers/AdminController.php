@@ -15,8 +15,21 @@ class AdminController
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
-        if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
-            header('Location: ' . BASE_URL . '/?url=login');
+        $role = strtolower($_SESSION['user']['role'] ?? '');
+
+        if (empty($_SESSION['user']) || $role !== 'admin') {
+
+            $contentType = $_SERVER['HTTP_CONTENT_TYPE'] ?? $_SERVER['CONTENT_TYPE'] ?? '';
+            $isAjax      = str_contains($contentType, 'application/json') ||
+                           !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Session expired']);
+                exit;
+            }
+
+            header('Location: ' . rtrim(BASE_URL, '/') . '/?url=login');
             exit;
         }
     }
@@ -40,13 +53,10 @@ class AdminController
 
     // =========================================================
     //  HELPER: Normalisasi row siswa
-    //  - Cast id & nis ke string (int8 Supabase aman di JS)
-    //  - Kembalikan null kalau id kosong (difilter pemanggil)
     // =========================================================
 
     private function normalizeSiswa(array $row): ?array
     {
-        // int8 dari Supabase bisa datang sebagai int atau string
         $id = isset($row['id']) ? (string) $row['id'] : '';
         if ($id === '' || $id === '0') return null;
 
@@ -56,6 +66,18 @@ class AdminController
             'nis'   => (string) ($row['nis']  ?? ''),
             'kelas' => trim($row['kelas'] ?? ''),
         ];
+    }
+
+    // =========================================================
+    //  HELPER: Cek apakah response dari Database::request sukses
+    // =========================================================
+
+    private function isSuccess($response): bool
+    {
+        if (is_null($response))    return true;
+        if (!is_array($response))  return true;
+        if (isset($response['error'])) return false;
+        return true;
     }
 
     // =========================================================
@@ -164,8 +186,6 @@ class AdminController
     {
         $this->requireAuth();
 
-        // ✅ FIX: cast=text memaksa Supabase return int8 sebagai string JSON
-        //        → tidak ada risiko JS integer overflow untuk id/nis besar
         $resp = Database::request('GET', 'students?select=id,nama,nis,kelas&order=kelas.asc,nama.asc');
 
         $siswa = [];
@@ -206,7 +226,6 @@ class AdminController
             exit;
         }
 
-        // Validasi NIS harus numerik (karena kolom int8)
         if (!ctype_digit($nis)) {
             echo json_encode(['success' => false, 'message' => 'NIS harus berupa angka']);
             exit;
@@ -220,12 +239,12 @@ class AdminController
 
         $insert = Database::request('POST', 'students', [
             'nama'     => $nama,
-            'nis'      => (int) $nis,   // kirim sebagai integer sesuai tipe int8
+            'nis'      => (int) $nis,
             'kelas'    => $kelas,
             'password' => password_hash($password, PASSWORD_DEFAULT),
         ]);
 
-        if (isset($insert['error'])) {
+        if (!$this->isSuccess($insert)) {
             echo json_encode(['success' => false, 'message' => 'Gagal menyimpan data siswa']);
             exit;
         }
@@ -261,7 +280,7 @@ class AdminController
             'kelas' => $kelas,
         ]);
 
-        if (isset($update['error'])) {
+        if (!$this->isSuccess($update)) {
             echo json_encode(['success' => false, 'message' => 'Gagal mengupdate data siswa']);
             exit;
         }
@@ -283,15 +302,60 @@ class AdminController
             exit;
         }
 
+        $siswaData = Database::request('GET', 'students?id=eq.' . urlencode($id) . '&select=nis&limit=1');
+        $nis = null;
+        if (!empty($siswaData) && !isset($siswaData['error']) && isset($siswaData[0]['nis'])) {
+            $nis = $siswaData[0]['nis'];
+        }
+
+        Database::request('DELETE', 'kehadiran?siswa_id=eq.' . urlencode($id));
+        if ($nis !== null) {
+            Database::request('DELETE', 'reports?student_nis=eq.'       . urlencode($nis));
+            Database::request('DELETE', 'parent_reports?student_nis=eq.' . urlencode($nis));
+        }
+
         $delete = Database::request('DELETE', 'students?id=eq.' . urlencode($id));
 
-        // Supabase DELETE sukses → return array kosong [], bukan ['error']
-        if (isset($delete['error'])) {
+        if (!$this->isSuccess($delete)) {
             echo json_encode(['success' => false, 'message' => 'Gagal menghapus data siswa']);
             exit;
         }
 
         echo json_encode(['success' => true, 'message' => 'Siswa berhasil dihapus']);
+        exit;
+    }
+
+    public function updateStatusKehadiran(): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+
+        $body   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id     = trim($body['id']     ?? '');
+        $status = trim($body['status'] ?? '');
+
+        $validStatus = ['Hadir', 'Izin', 'Alpha', 'Terlambat', 'Sakit'];
+
+        if (!$id) {
+            echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
+            exit;
+        }
+
+        if (!in_array($status, $validStatus)) {
+            echo json_encode(['success' => false, 'message' => 'Status tidak valid']);
+            exit;
+        }
+
+        $update = Database::request('PATCH', 'kehadiran?id=eq.' . urlencode($id), [
+            'status' => $status,
+        ]);
+
+        if (!$this->isSuccess($update)) {
+            echo json_encode(['success' => false, 'message' => 'Gagal mengupdate status']);
+            exit;
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Status berhasil diubah ke ' . $status]);
         exit;
     }
 
@@ -306,7 +370,6 @@ class AdminController
         $resp     = Database::request('GET', 'guru?select=id,nama,nip,email,no_hp,wali_kelas,status,created_at&order=nama.asc');
         $guruList = (!empty($resp) && !isset($resp['error']) && is_array($resp)) ? $resp : [];
 
-        // Cast id guru ke string juga (konsisten)
         $guruList = array_map(function ($g) {
             $g['id'] = isset($g['id']) ? (string) $g['id'] : '';
             return $g;
@@ -373,8 +436,12 @@ class AdminController
 
         $insert = Database::request('POST', 'guru', $payload);
 
-        if (isset($insert['error'])) {
-            echo json_encode(['success' => false, 'message' => 'Gagal menyimpan data guru']);
+        if (!$this->isSuccess($insert)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Gagal menyimpan data guru',
+                'debug'   => $insert,
+            ]);
             exit;
         }
 
@@ -423,7 +490,7 @@ class AdminController
 
         $update = Database::request('PATCH', 'guru?id=eq.' . urlencode($id), $payload);
 
-        if (isset($update['error'])) {
+        if (!$this->isSuccess($update)) {
             echo json_encode(['success' => false, 'message' => 'Gagal mengupdate data guru']);
             exit;
         }
@@ -447,7 +514,7 @@ class AdminController
 
         $delete = Database::request('DELETE', 'guru?id=eq.' . urlencode($id));
 
-        if (isset($delete['error'])) {
+        if (!$this->isSuccess($delete)) {
             echo json_encode(['success' => false, 'message' => 'Gagal menghapus data guru']);
             exit;
         }
@@ -467,7 +534,6 @@ class AdminController
         $resp      = Database::request('GET', 'kelas?select=id,nama_kelas,tingkat,wali_kelas,jumlah_siswa,tahun_ajaran,status&order=nama_kelas.asc');
         $kelasList = (!empty($resp) && !isset($resp['error']) && is_array($resp)) ? $resp : [];
 
-        // Cast id kelas ke string (konsisten)
         $kelasList = array_map(function ($k) {
             $k['id'] = isset($k['id']) ? (string) $k['id'] : '';
             return $k;
@@ -528,7 +594,7 @@ class AdminController
 
         $insert = Database::request('POST', 'kelas', $payload);
 
-        if (isset($insert['error'])) {
+        if (!$this->isSuccess($insert)) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Gagal menyimpan data kelas: ' . json_encode($insert['response'] ?? $insert),
@@ -568,7 +634,7 @@ class AdminController
 
         $update = Database::request('PATCH', 'kelas?id=eq.' . urlencode($id), $payload);
 
-        if (isset($update['error'])) {
+        if (!$this->isSuccess($update)) {
             echo json_encode(['success' => false, 'message' => 'Gagal mengupdate data kelas']);
             exit;
         }
@@ -592,7 +658,7 @@ class AdminController
 
         $delete = Database::request('DELETE', 'kelas?id=eq.' . urlencode($id));
 
-        if (isset($delete['error'])) {
+        if (!$this->isSuccess($delete)) {
             echo json_encode(['success' => false, 'message' => 'Gagal menghapus data kelas']);
             exit;
         }
@@ -609,37 +675,41 @@ class AdminController
     {
         $this->requireAuth();
 
-        $bulan  = (int) ($_GET['bulan']  ?? date('n'));
-        $tahun  = (int) ($_GET['tahun']  ?? date('Y'));
-        $kelas  = $_GET['kelas']  ?? '';
-        $status = $_GET['status'] ?? '';
+        require_once BASE_PATH . '/app/models/Absensi.php';
 
-        $data = [
-            'pageTitle'    => 'Laporan Kehadiran',
-            'filterBulan'  => $bulan,
-            'filterTahun'  => $tahun,
-            'filterKelas'  => $kelas,
-            'filterStatus' => $status,
-            'daftarKelas'  => ['X-A', 'X-B', 'XI-A', 'XI-B', 'XII-A', 'XII-B'],
-            'ringkasan'    => ['totalHadir' => 4560, 'totalIzin' => 210, 'totalSakit' => 145, 'totalAlpha' => 85, 'persentase' => 91.2],
-            'rekapKelas'   => [
-                ['kelas' => 'X-A',   'hadir' => 756, 'izin' => 32, 'sakit' => 18, 'alpha' => 14, 'pct' => 93.2],
-                ['kelas' => 'X-B',   'hadir' => 714, 'izin' => 40, 'sakit' => 22, 'alpha' => 24, 'pct' => 89.1],
-                ['kelas' => 'XI-A',  'hadir' => 798, 'izin' => 35, 'sakit' => 28, 'alpha' => 19, 'pct' => 91.6],
-                ['kelas' => 'XI-B',  'hadir' => 735, 'izin' => 42, 'sakit' => 25, 'alpha' => 23, 'pct' => 90.0],
-                ['kelas' => 'XII-A', 'hadir' => 777, 'izin' => 31, 'sakit' => 28, 'alpha' => 4,  'pct' => 94.8],
-                ['kelas' => 'XII-B', 'hadir' => 780, 'izin' => 30, 'sakit' => 24, 'alpha' => 1,  'pct' => 94.2],
-            ],
-            'detailAbsen'  => [
-                ['tanggal' => '2025-05-01', 'nama' => 'Ahmad Rizki Pratama', 'kelas' => 'XII-A', 'status' => 'hadir',  'keterangan' => '-'],
-                ['tanggal' => '2025-05-01', 'nama' => 'Budi Santoso',        'kelas' => 'X-A',   'status' => 'izin',   'keterangan' => 'Keperluan keluarga'],
-                ['tanggal' => '2025-05-01', 'nama' => 'Fajar Nugraha',       'kelas' => 'X-B',   'status' => 'alpha',  'keterangan' => '-'],
-                ['tanggal' => '2025-05-02', 'nama' => 'Siti Nurhaliza',      'kelas' => 'XI-B',  'status' => 'sakit',  'keterangan' => 'Demam'],
-                ['tanggal' => '2025-05-02', 'nama' => 'Dewi Rahayu',         'kelas' => 'XII-B', 'status' => 'hadir',  'keterangan' => '-'],
-            ],
-        ];
+        $absensiModel = new Absensi();
 
-        $this->view('admin/laporan', $data);
+        $respKelas   = Database::request('GET', 'kelas?select=nama_kelas&order=nama_kelas.asc');
+        $daftarKelas = (!empty($respKelas) && !isset($respKelas['error']) && is_array($respKelas))
+                       ? array_values(array_filter(array_column($respKelas, 'nama_kelas')))
+                       : [];
+
+        $tglMulai = $_GET['tgl_mulai'] ?? date('Y-m-d', strtotime('-6 days'));
+        $tglAkhir = $_GET['tgl_akhir'] ?? date('Y-m-d');
+        $kelas    = $_GET['kelas']     ?? '';
+        $status   = $_GET['status']    ?? '';
+
+        $laporanData = $absensiModel->getByRange($tglMulai, $tglAkhir, $kelas, $status);
+
+        $totalHadir     = count(array_filter($laporanData, fn($r) => $r['status'] === 'Hadir'));
+        $totalTerlambat = count(array_filter($laporanData, fn($r) => $r['status'] === 'Terlambat'));
+        $totalIzinSakit = count(array_filter($laporanData, fn($r) => in_array($r['status'], ['Izin', 'Sakit'])));
+        $totalAlpha     = count(array_filter($laporanData, fn($r) => $r['status'] === 'Alpha'));
+
+        $this->view('admin/laporan', [
+            'pageTitle'      => 'Laporan Kehadiran',
+            'laporanData'    => $laporanData,
+            'daftarKelas'    => $daftarKelas,
+            'totalHadir'     => $totalHadir,
+            'totalTerlambat' => $totalTerlambat,
+            'totalIzinSakit' => $totalIzinSakit,
+            'totalAlpha'     => $totalAlpha,
+            'total'          => count($laporanData),
+            'filterTglMulai' => $tglMulai,
+            'filterTglAkhir' => $tglAkhir,
+            'filterKelas'    => $kelas,
+            'filterStatus'   => $status,
+        ]);
     }
 
     // =========================================================
@@ -704,12 +774,14 @@ class AdminController
 
         $id = trim($_POST['id'] ?? '');
         if (empty($id)) {
-            echo json_encode(['success' => false, 'message' => 'ID tidak valid']); exit;
+            echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
+            exit;
         }
 
         $reg = Database::request('GET', 'registrasi?id=eq.' . $id . '&limit=1');
         if (empty($reg) || isset($reg['error'])) {
-            echo json_encode(['success' => false, 'message' => 'Data tidak ditemukan']); exit;
+            echo json_encode(['success' => false, 'message' => 'Data tidak ditemukan']);
+            exit;
         }
         $r = $reg[0];
 
@@ -731,8 +803,9 @@ class AdminController
             ]);
         }
 
-        if (isset($insert['error'])) {
-            echo json_encode(['success' => false, 'message' => 'Gagal membuat akun']); exit;
+        if (!$this->isSuccess($insert)) {
+            echo json_encode(['success' => false, 'message' => 'Gagal membuat akun']);
+            exit;
         }
 
         Database::request('PATCH', 'registrasi?id=eq.' . $id, ['status' => 'approved']);
@@ -747,7 +820,8 @@ class AdminController
 
         $id = trim($_POST['id'] ?? '');
         if (empty($id)) {
-            echo json_encode(['success' => false, 'message' => 'ID tidak valid']); exit;
+            echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
+            exit;
         }
 
         Database::request('PATCH', 'registrasi?id=eq.' . $id, ['status' => 'rejected']);

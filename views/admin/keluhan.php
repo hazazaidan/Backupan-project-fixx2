@@ -167,22 +167,25 @@
                                                 <div style="font-weight:600;font-size:13px;"><?= htmlspecialchars($r['title'] ?? '-') ?></div>
                                                 <div style="font-size:11px;color:var(--text2);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($r['message'] ?? '') ?></div>
                                             </td>
-                                            <td><span class="badge <?= $badgeClass ?>"><?= $badgeLabel ?></span></td>
+
+                                            <!-- KOLOM STATUS: badge dropdown -->
+                                            <td>
+                                                <div class="status-wrap">
+                                                    <span class="badge <?= $badgeClass ?> badge-clickable"
+                                                          data-id="<?= $r['id'] ?>"
+                                                          data-jenis="siswa"
+                                                          onclick="toggleStatusDropdown(event, this)">
+                                                        <?= $badgeLabel ?> <span style="font-size:10px;opacity:.7;">▾</span>
+                                                    </span>
+                                                </div>
+                                            </td>
+
                                             <td style="font-size:12px;color:var(--text2);"><?= date('d M Y', strtotime($r['created_at'])) ?></td>
                                             <td>
                                                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                                                     <a href="?url=admin/keluhan/chat&id=<?= urlencode($r['id']) ?>&jenis=siswa" class="btn-edit btn-sm">
                                                         <i class="bi bi-chat-dots"></i> Chat
                                                     </a>
-                                                    <?php if ($st === 'pending'): ?>
-                                                        <button class="btn-sm" style="background:#dcfce7;color:#16a34a;border:none;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;"
-                                                            onclick="updateStatus('<?= $r['id'] ?>','accepted','siswa')">
-                                                            <i class="bi bi-check"></i> Terima
-                                                        </button>
-                                                        <button class="btn-danger btn-sm" onclick="openTolakModal('<?= $r['id'] ?>','siswa')">
-                                                            <i class="bi bi-x"></i> Tolak
-                                                        </button>
-                                                    <?php endif; ?>
                                                     <button class="btn-secondary btn-sm"
                                                         onclick='openDetailModal(<?= json_encode(['id'=>$r['id'],'title'=>$r['title']??'','message'=>$r['message']??'','status'=>$st,'created_at'=>$r['created_at'],'nama'=>$nama,'kelas'=>$kelas,'description'=>$r['description']??'']) ?>, "siswa")'>
                                                         <i class="bi bi-eye"></i>
@@ -244,22 +247,25 @@
                                                 <div style="font-weight:600;font-size:13px;"><?= htmlspecialchars($r['title'] ?? '-') ?></div>
                                                 <div style="font-size:11px;color:var(--text2);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($r['message'] ?? '') ?></div>
                                             </td>
-                                            <td><span class="badge <?= $badgeClass ?>"><?= $badgeLabel ?></span></td>
+
+                                            <!-- KOLOM STATUS: badge dropdown -->
+                                            <td>
+                                                <div class="status-wrap">
+                                                    <span class="badge <?= $badgeClass ?> badge-clickable"
+                                                          data-id="<?= $r['id'] ?>"
+                                                          data-jenis="ortu"
+                                                          onclick="toggleStatusDropdown(event, this)">
+                                                        <?= $badgeLabel ?> <span style="font-size:10px;opacity:.7;">▾</span>
+                                                    </span>
+                                                </div>
+                                            </td>
+
                                             <td style="font-size:12px;color:var(--text2);"><?= date('d M Y', strtotime($r['created_at'])) ?></td>
                                             <td>
                                                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                                                     <a href="?url=admin/keluhan/chat&id=<?= urlencode($r['id']) ?>&jenis=ortu" class="btn-edit btn-sm">
                                                         <i class="bi bi-chat-dots"></i> Chat
                                                     </a>
-                                                    <?php if ($st === 'pending'): ?>
-                                                        <button class="btn-sm" style="background:#dcfce7;color:#16a34a;border:none;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;"
-                                                            onclick="updateStatus('<?= $r['id'] ?>','accepted','ortu')">
-                                                            <i class="bi bi-check"></i> Terima
-                                                        </button>
-                                                        <button class="btn-danger btn-sm" onclick="openTolakModal('<?= $r['id'] ?>','ortu')">
-                                                            <i class="bi bi-x"></i> Tolak
-                                                        </button>
-                                                    <?php endif; ?>
                                                     <button class="btn-secondary btn-sm"
                                                         onclick='openDetailModal(<?= json_encode(['id'=>$r['id'],'title'=>$r['title']??'','message'=>$r['message']??'','status'=>$st,'created_at'=>$r['created_at'],'nama'=>$nama,'kelas'=>$kelas,'description'=>'']) ?>, "ortu")'>
                                                         <i class="bi bi-eye"></i>
@@ -278,6 +284,19 @@
         </div><!-- /.admin-content -->
     </div><!-- /.admin-main -->
 </div><!-- /.admin-layout -->
+
+<!-- DROPDOWN PORTAL — di luar semua container, position:fixed bebas clip -->
+<div id="statusDropdownPortal" class="status-keluhan-dropdown">
+    <div class="skd-item" onclick="pilihStatusKeluhan('accepted')">
+        <span class="skd-dot" style="background:#16a34a;"></span> Diterima
+    </div>
+    <div class="skd-item" onclick="pilihStatusKeluhan('pending')">
+        <span class="skd-dot" style="background:#d97706;"></span> Pending
+    </div>
+    <div class="skd-item" onclick="pilihStatusKeluhan('rejected')">
+        <span class="skd-dot" style="background:#dc2626;"></span> Ditolak
+    </div>
+</div>
 
 <!-- MODAL DETAIL -->
 <div class="modal-overlay" id="modalDetail">
@@ -315,7 +334,11 @@
     </div>
 </div>
 
+<!-- TOAST -->
+<div id="toastWrap" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;"></div>
+
 <style>
+/* ── TABS ─────────────────────────────────────────────── */
 .tab-bar {
     display: flex;
     gap: 4px;
@@ -348,9 +371,62 @@
     font-weight: 700;
 }
 .tab-btn:not(.active) .tab-count { background: var(--border); color: var(--text2); }
+
+/* ── STATUS BADGE ─────────────────────────────────────── */
+.status-wrap {
+    display: inline-block;
+}
+.badge-clickable {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+    transition: opacity 0.15s;
+}
+.badge-clickable:hover { opacity: 0.82; }
+
+/* ── DROPDOWN PORTAL (position:fixed — tidak bisa terpotong) ── */
+.status-keluhan-dropdown {
+    display: none;
+    position: fixed;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+    z-index: 99999;
+    min-width: 150px;
+    overflow: hidden;
+    animation: dropFadeIn 0.12s ease;
+}
+@keyframes dropFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.status-keluhan-dropdown.open { display: block; }
+.skd-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-family: 'Poppins', sans-serif;
+    color: var(--text);
+}
+.skd-item:hover { background: #f5f3ff; }
+.skd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 </style>
 
 <script>
+/* ── TAB ────────────────────────────────────────────────── */
 function switchTab(tab) {
     document.getElementById('tableSiswa').style.display = tab === 'siswa' ? 'block' : 'none';
     document.getElementById('tableOrtu').style.display  = tab === 'ortu'  ? 'block' : 'none';
@@ -358,6 +434,7 @@ function switchTab(tab) {
     document.getElementById('tabOrtu').classList.toggle('active',  tab === 'ortu');
 }
 
+/* ── SEARCH ─────────────────────────────────────────────── */
 document.getElementById('searchInput').addEventListener('input', function() {
     const q = this.value.toLowerCase();
     document.querySelectorAll('.report-row').forEach(row => {
@@ -365,6 +442,7 @@ document.getElementById('searchInput').addEventListener('input', function() {
     });
 });
 
+/* ── FILTER ─────────────────────────────────────────────── */
 function applyFilter() {
     const jenis  = document.getElementById('filterJenis').value;
     const status = document.getElementById('filterStatus').value;
@@ -374,27 +452,121 @@ function applyFilter() {
     window.location = url;
 }
 
-function updateStatus(id, status, jenis, catatan = '') {
-    fetch('?url=admin/keluhan/updateStatus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status, jenis, catatan })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(data.message || 'Gagal', 'error');
-        }
-    })
-    .catch(() => showToast('Terjadi kesalahan', 'error'));
+/* ── MODAL ──────────────────────────────────────────────── */
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+/* ── TOAST ──────────────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.style.cssText = `background:#1e1b4b;color:#fff;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:320px;border-left:4px solid ${type === 'success' ? '#22c55e' : '#ef4444'};font-family:'Poppins',sans-serif;`;
+    t.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill'}"></i> ${msg}`;
+    wrap.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 3000);
+    setTimeout(() => t.remove(), 3350);
 }
 
+/* ── STATUS DROPDOWN (PORTAL — position:fixed) ──────────── */
+let _activeBadge = null;
+const portal = document.getElementById('statusDropdownPortal');
+
+function toggleStatusDropdown(e, badge) {
+    e.stopPropagation();
+
+    // toggle: kalau badge yang sama diklik lagi, tutup
+    if (_activeBadge === badge && portal.classList.contains('open')) {
+        closeStatusDropdown();
+        return;
+    }
+
+    _activeBadge = badge;
+
+    const rect  = badge.getBoundingClientRect();
+    const ddH   = 130; // estimasi tinggi dropdown (3 item)
+    const ddW   = 155;
+
+    // posisi horizontal: clamped agar tidak keluar layar kanan
+    let left = rect.left;
+    if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+
+    // posisi vertikal: flip ke atas jika ruang bawah kurang
+    let top;
+    if (window.innerHeight - rect.bottom < ddH + 8) {
+        top = rect.top - ddH - 4; // muncul ke atas
+    } else {
+        top = rect.bottom + 4;    // muncul ke bawah
+    }
+
+    portal.style.top  = top  + 'px';
+    portal.style.left = left + 'px';
+    portal.classList.add('open');
+}
+
+function closeStatusDropdown() {
+    portal.classList.remove('open');
+    _activeBadge = null;
+}
+
+// tutup saat klik di luar
+document.addEventListener('click', function(e) {
+    if (!portal.contains(e.target)) closeStatusDropdown();
+});
+
+// tutup saat scroll (posisi berubah)
+window.addEventListener('scroll', closeStatusDropdown, true);
+
+/* ── PILIH STATUS ───────────────────────────────────────── */
+const keluhanBadgeConfig = {
+    'accepted': { cls: 'badge-success', label: 'Diterima' },
+    'pending':  { cls: 'badge-warning', label: 'Pending'  },
+    'rejected': { cls: 'badge-danger',  label: 'Ditolak'  },
+};
+
+async function pilihStatusKeluhan(statusBaru) {
+    const badge = _activeBadge;
+    if (!badge) return;
+
+    const id    = badge.dataset.id;
+    const jenis = badge.dataset.jenis;
+
+    closeStatusDropdown();
+
+    if (!id) { showToast('ID tidak ditemukan', 'error'); return; }
+
+    badge.style.opacity       = '0.5';
+    badge.style.pointerEvents = 'none';
+
+    try {
+        const res  = await fetch('?url=admin/keluhan/updateStatus', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ id, status: statusBaru, jenis }),
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            const cfg = keluhanBadgeConfig[statusBaru];
+            badge.className = `badge ${cfg.cls} badge-clickable`;
+            badge.innerHTML = `${cfg.label} <span style="font-size:10px;opacity:.7;">▾</span>`;
+            badge.dataset.id    = id;
+            badge.dataset.jenis = jenis;
+            showToast(json.message ?? 'Status berhasil diubah', 'success');
+        } else {
+            showToast(json.message || 'Gagal mengubah status', 'error');
+        }
+    } catch (e) {
+        showToast('Gagal terhubung ke server', 'error');
+    }
+
+    badge.style.opacity       = '1';
+    badge.style.pointerEvents = 'auto';
+}
+
+/* ── TOLAK MODAL ────────────────────────────────────────── */
 function openTolakModal(id, jenis) {
-    document.getElementById('tolakId').value    = id;
-    document.getElementById('tolakJenis').value = jenis;
+    document.getElementById('tolakId').value      = id;
+    document.getElementById('tolakJenis').value   = jenis;
     document.getElementById('tolakCatatan').value = '';
     openModal('modalTolak');
 }
@@ -403,28 +575,54 @@ function submitTolak() {
     const jenis   = document.getElementById('tolakJenis').value;
     const catatan = document.getElementById('tolakCatatan').value;
     closeModal('modalTolak');
-    updateStatus(id, 'rejected', jenis, catatan);
+
+    fetch('?url=admin/keluhan/updateStatus', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ id, status: 'rejected', jenis, catatan }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message ?? 'Laporan ditolak', 'success');
+            const badge = document.querySelector(`.badge-clickable[data-id="${id}"]`);
+            if (badge) {
+                badge.className = 'badge badge-danger badge-clickable';
+                badge.innerHTML = 'Ditolak <span style="font-size:10px;opacity:.7;">▾</span>';
+            }
+        } else {
+            showToast(data.message || 'Gagal', 'error');
+        }
+    })
+    .catch(() => showToast('Terjadi kesalahan', 'error'));
 }
 
+/* ── DETAIL MODAL ───────────────────────────────────────── */
 function openDetailModal(data, jenis) {
     document.getElementById('modalDetailTitle').textContent = data.title || 'Detail Laporan';
-    const stMap = { accepted: ['badge-success','Diterima'], rejected: ['badge-danger','Ditolak'], pending: ['badge-warning','Pending'] };
+    const stMap = {
+        accepted: ['badge-success', 'Diterima'],
+        rejected: ['badge-danger',  'Ditolak'],
+        pending:  ['badge-warning', 'Pending'],
+    };
     const [stClass, stLabel] = stMap[data.status] || stMap.pending;
-    const tgl = data.created_at ? new Date(data.created_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}) : '-';
+    const tgl = data.created_at
+        ? new Date(data.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+        : '-';
 
     let html = `
         <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;">
-            <div class="ava" style="background:#4f46e5;width:44px;height:44px;font-size:16px;">${esc(data.nama||'-').substring(0,2).toUpperCase()}</div>
+            <div class="ava" style="background:#4f46e5;width:44px;height:44px;font-size:16px;">${esc(data.nama || '-').substring(0, 2).toUpperCase()}</div>
             <div>
-                <div style="font-weight:700;font-size:14px;">${esc(data.nama||'-')}</div>
-                <div style="font-size:12px;color:var(--text2);">${esc(data.kelas||'-')}</div>
+                <div style="font-weight:700;font-size:14px;">${esc(data.nama || '-')}</div>
+                <div style="font-size:12px;color:var(--text2);">${esc(data.kelas || '-')}</div>
             </div>
         </div>
         <div style="margin-bottom:12px;">
             <span class="badge ${stClass}">${stLabel}</span>
             <span style="font-size:11px;color:var(--text2);margin-left:8px;">${tgl}</span>
         </div>
-        <div style="background:var(--bg);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;color:var(--text);">${esc(data.message||'-')}</div>
+        <div style="background:var(--bg);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;color:var(--text);">${esc(data.message || '-')}</div>
     `;
     if (data.description) {
         html += `<div style="margin-top:12px;padding:10px 14px;background:#ede9fe;border-radius:9px;font-size:12px;color:#7c3aed;">
@@ -441,6 +639,7 @@ function esc(str) {
     return d.innerHTML;
 }
 
+/* ── AUTO SWITCH TAB ────────────────────────────────────── */
 const fj = '<?= $filterJenis ?>';
 if (fj === 'ortu') switchTab('ortu');
 </script>

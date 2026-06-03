@@ -2,6 +2,8 @@
 
 ob_start();
 
+$GLOBALS['raw_input'] = file_get_contents('php://input');
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 

@@ -47,11 +47,9 @@ class KeluhanController
         $status = $_GET['status'] ?? '';
         $jenis  = $_GET['jenis']  ?? '';
 
-        // Query reports (laporan siswa) — kolom sesuai schema Supabase
         $queryReports = 'reports?select=id,title,message,status,description,created_at,student_nis,students(nama,kelas)&order=created_at.desc';
         if ($status) $queryReports .= '&status=eq.' . urlencode($status);
 
-        // Query parent_reports (laporan orang tua) — kolom sesuai schema Supabase
         $queryParent = 'parent_reports?select=id,title,message,status,created_at,student_nis,students(nama,kelas)&order=created_at.desc';
         if ($status) $queryParent .= '&status=eq.' . urlencode($status);
 
@@ -68,7 +66,6 @@ class KeluhanController
             $parentReports = (!empty($raw) && !isset($raw['error'])) ? $raw : [];
         }
 
-        // Hitung badge per status
         $countSiswa  = Database::request('GET', 'reports?select=status');
         $countParent = Database::request('GET', 'parent_reports?select=status');
 
@@ -93,7 +90,7 @@ class KeluhanController
     }
 
     // =========================================================
-    //  ACCEPT / REJECT
+    //  UPDATE STATUS (ACCEPT / REJECT / PENDING)
     // =========================================================
 
     public function updateStatus(): void
@@ -106,14 +103,14 @@ class KeluhanController
         $jenis   = trim($body['jenis']   ?? 'siswa');
         $catatan = trim($body['catatan'] ?? '');
 
-        if (!$id || !in_array($status, ['accepted', 'rejected'])) {
+        if (!$id || !in_array($status, ['accepted', 'rejected', 'pending'])) {
             $this->json(['success' => false, 'message' => 'Parameter tidak valid']);
         }
 
         $tabel = $jenis === 'ortu' ? 'parent_reports' : 'reports';
 
         $payload = ['status' => $status];
-        if ($catatan) $payload['description'] = $catatan; // simpan catatan admin di kolom description
+        if ($catatan) $payload['description'] = $catatan;
 
         $result = Database::request('PATCH', $tabel . '?id=eq.' . urlencode($id), $payload);
 
@@ -121,7 +118,11 @@ class KeluhanController
             $this->json(['success' => false, 'message' => 'Gagal memperbarui status']);
         }
 
-        $label = $status === 'accepted' ? 'diterima' : 'ditolak';
+        $label = match($status) {
+            'accepted' => 'diterima',
+            'rejected' => 'ditolak',
+            default    => 'diubah ke pending',
+        };
         $this->json(['success' => true, 'message' => "Laporan berhasil {$label}"]);
     }
 
@@ -199,12 +200,11 @@ class KeluhanController
             $this->json(['success' => false, 'message' => 'Report ID tidak valid']);
         }
 
-        // ── Upload file jika ada ───────────────────────────
         if (!empty($_FILES['file']['name'])) {
             $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png',
                              'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
             $allowedExts  = ['pdf', 'jpg', 'jpeg', 'png', 'docx'];
-            $maxSize      = 5 * 1024 * 1024; // 5MB
+            $maxSize      = 5 * 1024 * 1024;
 
             $file     = $_FILES['file'];
             $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -237,19 +237,18 @@ class KeluhanController
             $this->json(['success' => false, 'message' => 'Pesan atau file harus diisi']);
         }
 
-        // ── Simpan pesan ───────────────────────────────────
         if ($jenis === 'ortu') {
             $payload = [
-                'report_id'   => $reportId,
-                'sender'      => 'admin',
-                'message'     => $pesan ?: ($fileName ?? ''),
+                'report_id' => $reportId,
+                'sender'    => 'admin',
+                'message'   => $pesan ?: ($fileName ?? ''),
             ];
             $result = Database::request('POST', 'parent_report_messages', $payload);
         } else {
             $payload = [
-                'report_id'   => $reportId,
-                'sender'      => 'admin',
-                'message'     => $pesan ?: ($fileName ?? ''),
+                'report_id' => $reportId,
+                'sender'    => 'admin',
+                'message'   => $pesan ?: ($fileName ?? ''),
             ];
             $result = Database::request('POST', 'report_messages', $payload);
         }

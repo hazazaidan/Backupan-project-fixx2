@@ -510,15 +510,16 @@ $aktivitas = $aktivitas ?? [];
                         <h3><i class="bi bi-lightning-charge-fill me-2" style="color:var(--accent)"></i>Akses Cepat</h3>
                     </div>
                     <div class="qa-grid">
-                        <a href="?url=admin/siswa/tambah" class="qa-item">
+                        <a href="?url=admin/siswa#tambah" class="qa-item">
                             <div class="qa-icon" style="background:#eff6ff;color:#2563eb;"><i class="bi bi-person-plus-fill"></i></div>
                             <span class="qa-label">Tambah Siswa</span>
                         </a>
-                        <a href="?url=admin/guru/tambah" class="qa-item">
+                        <a href="?url=admin/guru#tambah" class="qa-item">
                             <div class="qa-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-person-badge-fill"></i></div>
                             <span class="qa-label">Tambah Guru</span>
                         </a>
-                        <a href="?url=admin/kelas/tambah" class="qa-item">
+                        <!-- ✅ FIX: link diubah ke #tambah agar modal otomatis terbuka -->
+                        <a href="?url=admin/kelas#tambah" class="qa-item">
                             <div class="qa-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-building-add"></i></div>
                             <span class="qa-label">Tambah Kelas</span>
                         </a>
@@ -526,10 +527,7 @@ $aktivitas = $aktivitas ?? [];
                             <div class="qa-icon" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
                             <span class="qa-label">Laporan</span>
                         </a>
-                        <a href="?url=admin/siswa" class="qa-item">
-                            <div class="qa-icon" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-qr-code-scan"></i></div>
-                            <span class="qa-label">Scan QR</span>
-                        </a>
+                        <!-- ✅ HAPUS: Scan QR dihapus -->
                         <a href="?url=admin/pengaturan" class="qa-item">
                             <div class="qa-icon" style="background:#f1f5f9;color:#64748b;"><i class="bi bi-gear-fill"></i></div>
                             <span class="qa-label">Pengaturan</span>

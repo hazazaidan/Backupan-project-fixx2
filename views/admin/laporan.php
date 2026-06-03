@@ -7,30 +7,6 @@ $bulan = ['January'=>'Januari','February'=>'Februari','March'=>'Maret','April'=>
     'September'=>'September','October'=>'Oktober','November'=>'November','December'=>'Desember'];
 $tanggalHariIni = date('d') . ' ' . $bulan[date('F')] . ' ' . date('Y');
 
-// Data dummy laporan
-$laporanData = [
-    ['tanggal'=>'2026-05-14','nama'=>'Ahmad Fauzi','kelas'=>'XI RPL 1','jam_datang'=>'07:05','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-    ['tanggal'=>'2026-05-14','nama'=>'Bella Safitri','kelas'=>'XI RPL 1','jam_datang'=>'07:20','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-    ['tanggal'=>'2026-05-14','nama'=>'Cahya Ramadan','kelas'=>'XI RPL 1','jam_datang'=>'08:15','jam_pulang'=>'15:30','status'=>'Terlambat','ket'=>'Terlambat 15 menit'],
-    ['tanggal'=>'2026-05-14','nama'=>'Dewi Lestari','kelas'=>'X RPL 2','jam_datang'=>'07:00','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-    ['tanggal'=>'2026-05-14','nama'=>'Eko Prasetyo','kelas'=>'X RPL 2','jam_datang'=>'-','jam_pulang'=>'-','status'=>'Alpha','ket'=>'Tidak Hadir'],
-    ['tanggal'=>'2026-05-14','nama'=>'Fitri Handayani','kelas'=>'XII IPA 1','jam_datang'=>'07:10','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-    ['tanggal'=>'2026-05-13','nama'=>'Gilang Ramadhan','kelas'=>'XII IPA 1','jam_datang'=>'-','jam_pulang'=>'-','status'=>'Izin','ket'=>'Surat Izin'],
-    ['tanggal'=>'2026-05-13','nama'=>'Hana Pertiwi','kelas'=>'XI RPL 2','jam_datang'=>'07:25','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-    ['tanggal'=>'2026-05-13','nama'=>'Irfan Maulana','kelas'=>'XI RPL 2','jam_datang'=>'-','jam_pulang'=>'-','status'=>'Sakit','ket'=>'Surat Sakit'],
-    ['tanggal'=>'2026-05-13','nama'=>'Jasmine Putri','kelas'=>'X RPL 1','jam_datang'=>'07:05','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-    ['tanggal'=>'2026-05-12','nama'=>'Kevin Ardian','kelas'=>'X RPL 1','jam_datang'=>'08:45','jam_pulang'=>'15:30','status'=>'Terlambat','ket'=>'Terlambat 45 menit'],
-    ['tanggal'=>'2026-05-12','nama'=>'Layla Sari','kelas'=>'XII RPL 1','jam_datang'=>'07:00','jam_pulang'=>'15:30','status'=>'Hadir','ket'=>'Tepat Waktu'],
-];
-
-$kelasList = ['X RPL 1','X RPL 2','XI RPL 1','XI RPL 2','XII RPL 1','XII RPL 2','X IPA 1','XI IPA 1','XII IPA 1'];
-
-$totalHadir    = count(array_filter($laporanData, fn($r) => $r['status'] === 'Hadir'));
-$totalTerlambat= count(array_filter($laporanData, fn($r) => $r['status'] === 'Terlambat'));
-$totalIzinSakit= count(array_filter($laporanData, fn($r) => in_array($r['status'], ['Izin','Sakit'])));
-$totalAlpha    = count(array_filter($laporanData, fn($r) => $r['status'] === 'Alpha'));
-$total         = count($laporanData);
-
 $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef4444','#14b8a6','#f97316','#06b6d4'];
 ?>
 <!DOCTYPE html>
@@ -125,7 +101,6 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
             color: var(--text2);
         }
 
-        /* Empty state */
         .empty-laporan {
             text-align: center; padding: 70px 20px;
         }
@@ -140,10 +115,51 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
         .empty-laporan h5 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
         .empty-laporan p  { font-size: 13px; color: var(--text2); }
 
-        /* Chart section */
         .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
         .chart-card { background: white; border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
         .chart-card h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+
+        /* ✅ STATUS DROPDOWN */
+        .status-wrap { position: relative; display: inline-block; }
+        .badge-clickable {
+            cursor: pointer;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: opacity 0.15s;
+            user-select: none;
+        }
+        .badge-clickable:hover { opacity: 0.8; }
+        .badge-clickable::after {
+            content: '▾';
+            font-size: 10px;
+            margin-left: 2px;
+            opacity: 0.6;
+        }
+        .status-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 999;
+            min-width: 140px;
+            overflow: hidden;
+        }
+        .status-dropdown.open { display: block; }
+        .status-dropdown-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 14px;
+            font-size: 12.5px; font-weight: 600;
+            cursor: pointer;
+            transition: background 0.1s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .status-dropdown-item:hover { background: #f5f3ff; }
+        .status-dropdown-item .dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
 
         @media (max-width: 900px) {
             .filter-row { grid-template-columns: 1fr 1fr; }
@@ -153,7 +169,6 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
             .filter-row { grid-template-columns: 1fr; }
         }
 
-        /* Print */
         @media print {
             .admin-sidebar, .admin-topbar, .filter-card,
             .summary-chips, .chart-row, .table-actions { display: none !important; }
@@ -195,18 +210,20 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                 <div class="filter-row">
                     <div class="filter-field">
                         <label>Tanggal Mulai</label>
-                        <input type="date" id="tglMulai" value="2026-05-12">
+                        <input type="date" id="tglMulai" value="<?= htmlspecialchars($filterTglMulai) ?>">
                     </div>
                     <div class="filter-field">
                         <label>Tanggal Akhir</label>
-                        <input type="date" id="tglAkhir" value="2026-05-14">
+                        <input type="date" id="tglAkhir" value="<?= htmlspecialchars($filterTglAkhir) ?>">
                     </div>
                     <div class="filter-field">
                         <label>Kelas</label>
                         <select id="filterKelas">
                             <option value="">Semua Kelas</option>
-                            <?php foreach ($kelasList as $k): ?>
-                            <option value="<?= $k ?>"><?= $k ?></option>
+                            <?php foreach ($daftarKelas as $k): ?>
+                            <option value="<?= htmlspecialchars($k) ?>" <?= ($filterKelas === $k) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($k) ?>
+                            </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -214,11 +231,11 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                         <label>Status</label>
                         <select id="filterStatus">
                             <option value="">Semua Status</option>
-                            <option value="Hadir">Hadir</option>
-                            <option value="Terlambat">Terlambat</option>
-                            <option value="Izin">Izin</option>
-                            <option value="Sakit">Sakit</option>
-                            <option value="Alpha">Alpha</option>
+                            <option value="Hadir"     <?= ($filterStatus === 'Hadir')     ? 'selected' : '' ?>>Hadir</option>
+                            <option value="Terlambat" <?= ($filterStatus === 'Terlambat') ? 'selected' : '' ?>>Terlambat</option>
+                            <option value="Izin"      <?= ($filterStatus === 'Izin')      ? 'selected' : '' ?>>Izin</option>
+                            <option value="Sakit"     <?= ($filterStatus === 'Sakit')     ? 'selected' : '' ?>>Sakit</option>
+                            <option value="Alpha"     <?= ($filterStatus === 'Alpha')     ? 'selected' : '' ?>>Alpha</option>
                         </select>
                     </div>
                     <div class="filter-field" style="display:flex;gap:8px;">
@@ -296,10 +313,10 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                         <h3><i class="bi bi-table" style="color:var(--accent);margin-right:6px;"></i>Data Kehadiran</h3>
                         <p style="font-size:12px;color:var(--text2);margin-top:2px;" id="tableInfo">
                             Menampilkan <strong id="rowCount"><?= $total ?></strong> rekaman
+                            <span style="color:#7c3aed;font-size:11px;margin-left:6px;">· Klik badge status untuk mengubah</span>
                         </p>
                     </div>
                     <div class="table-actions" style="display:flex;gap:8px;align-items:center;">
-                        <!-- Search inline -->
                         <div style="position:relative;">
                             <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:13px;"></i>
                             <input type="text" id="searchNama" placeholder="Cari nama siswa..."
@@ -355,6 +372,7 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                                 str_contains($row['ket'], 'Tidak')     => 'bi-x-circle',
                                 default                                 => 'bi-check2-circle',
                             };
+                            $kehadiranId = $row['id'] ?? '';
                         ?>
                             <tr data-nama="<?= strtolower($row['nama']) ?>"
                                 data-kelas="<?= $row['kelas'] ?>"
@@ -372,7 +390,7 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                                     </div>
                                 </td>
                                 <td>
-                                    <span style="background:#ede9fe;color:#7c3aed;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;"><?= $row['kelas'] ?></span>
+                                    <span style="background:#ede9fe;color:#7c3aed;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;"><?= htmlspecialchars($row['kelas']) ?></span>
                                 </td>
                                 <td>
                                     <?php if ($row['jam_datang'] !== '-'): ?>
@@ -388,11 +406,36 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                                     <span style="color:var(--text2);font-size:13px;">—</span>
                                     <?php endif; ?>
                                 </td>
+
+                                <!-- ✅ KOLOM STATUS: badge bisa diklik -->
                                 <td>
+                                    <?php if (!empty($kehadiranId)): ?>
+                                    <div class="status-wrap">
+                                        <span class="badge <?= $statusClass ?> badge-clickable"
+                                              data-id="<?= $kehadiranId ?>"
+                                              onclick="toggleDropdown(this)">
+                                            <i class="bi <?= $statusIcon ?>"></i> <?= $row['status'] ?>
+                                        </span>
+                                        <div class="status-dropdown">
+                                            <div class="status-dropdown-item" onclick="pilihStatus(this, 'Hadir')">
+                                                <span class="dot" style="background:#16a34a;"></span>  Hadir
+                                            </div>
+                                            <div class="status-dropdown-item" onclick="pilihStatus(this, 'Izin')">
+                                                <span class="dot" style="background:#2563eb;"></span>  Izin
+                                            </div>
+
+                                            <div class="status-dropdown-item" onclick="pilihStatus(this, 'Alpha')">
+                                                <span class="dot" style="background:#dc2626;"></span>  Alpha
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php else: ?>
                                     <span class="badge <?= $statusClass ?>" style="gap:5px;">
                                         <i class="bi <?= $statusIcon ?>"></i> <?= $row['status'] ?>
                                     </span>
+                                    <?php endif; ?>
                                 </td>
+
                                 <td>
                                     <span class="ket-badge">
                                         <i class="bi <?= $ketIcon ?>" style="font-size:13px;"></i>
@@ -442,22 +485,12 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                 <i class="bi bi-info-circle-fill" style="color:var(--accent);font-size:20px;flex-shrink:0;"></i>
                 <div style="font-size:13px;color:var(--text);">
                     File akan diexport berdasarkan filter yang sedang aktif.<br>
-                    <strong id="exportInfo">12 rekaman</strong> akan diekspor.
+                    <strong id="exportInfo">0 rekaman</strong> akan diekspor.
                 </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Nama File</label>
                 <input type="text" class="form-control" id="exportFileName" value="laporan_kehadiran_<?= date('Ymd') ?>">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Sertakan Kolom</label>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                    <?php foreach (['Tanggal','Nama Siswa','Kelas','Jam Datang','Jam Pulang','Status','Keterangan'] as $col): ?>
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" checked style="accent-color:var(--accent);"> <?= $col ?>
-                    </label>
-                    <?php endforeach; ?>
-                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -469,8 +502,10 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
     </div>
 </div>
 
+<!-- TOAST -->
+<div id="toastWrap" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;"></div>
+
 <script>
-// ── Data PHP → JS ────────────────────────────────────────
 const allData = <?= json_encode($laporanData) ?>;
 let currentExportType = 'excel';
 
@@ -489,9 +524,7 @@ new Chart(ctxPie, {
     },
     options: {
         responsive: true,
-        plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 11, family: 'Poppins' }, padding: 14 } }
-        },
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: 'Poppins' }, padding: 14 } } },
         cutout: '65%',
     }
 });
@@ -516,6 +549,17 @@ new Chart(ctxBar, {
         }
     }
 });
+
+// ── Toast ────────────────────────────────────────────────
+function showToast(msg, type='success') {
+    const wrap = document.getElementById('toastWrap');
+    const t = document.createElement('div');
+    t.style.cssText = `background:#1e1b4b;color:#fff;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:320px;border-left:4px solid ${type==='success'?'#22c55e':'#ef4444'};font-family:'Poppins',sans-serif;`;
+    t.innerHTML = `<i class="bi bi-${type==='success'?'check-circle-fill':'exclamation-circle-fill'}"></i> ${msg}`;
+    wrap.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; }, 3000);
+    setTimeout(()=>t.remove(), 3350);
+}
 
 // ── Filter & Search ──────────────────────────────────────
 function filterTable() {
@@ -546,8 +590,12 @@ function cariData() {
 }
 
 function resetFilter() {
-    document.getElementById('tglMulai').value    = '2026-05-12';
-    document.getElementById('tglAkhir').value    = '2026-05-14';
+    const today  = new Date();
+    const minus6 = new Date(today);
+    minus6.setDate(today.getDate() - 6);
+    const fmt = d => d.toISOString().split('T')[0];
+    document.getElementById('tglMulai').value    = fmt(minus6);
+    document.getElementById('tglAkhir').value    = fmt(today);
     document.getElementById('filterKelas').value  = '';
     document.getElementById('filterStatus').value = '';
     document.getElementById('searchNama').value   = '';
@@ -568,6 +616,10 @@ function sortTable(col) {
     });
     rows.forEach(r => tbody.appendChild(r));
 }
+
+// ── Modal helpers ────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
 // ── Export ───────────────────────────────────────────────
 function exportExcel() {
@@ -594,7 +646,74 @@ function doExport() {
     const fname = document.getElementById('exportFileName').value || 'laporan_kehadiran';
     closeModal('modalExport');
     showToast('File "' + fname + '.' + (currentExportType === 'excel' ? 'xlsx' : 'pdf') + '" sedang diunduh...');
-    // TODO: hit controller endpoint untuk generate file sungguhan
+}
+
+// ✅ STATUS DROPDOWN LOGIC ────────────────────────────────
+const statusConfig = {
+    'Hadir'     : { cls: 'status-hadir',     icon: 'bi-check-circle-fill' },
+    'Terlambat' : { cls: 'status-terlambat', icon: 'bi-clock-fill'        },
+    'Izin'      : { cls: 'status-izin',      icon: 'bi-file-text-fill'    },
+    'Sakit'     : { cls: 'status-sakit',     icon: 'bi-heart-pulse-fill'  },
+    'Alpha'     : { cls: 'status-alpha',     icon: 'bi-x-circle-fill'     },
+};
+
+function toggleDropdown(badge) {
+    // Tutup semua dropdown lain dulu
+    document.querySelectorAll('.status-dropdown.open').forEach(d => {
+        if (d !== badge.nextElementSibling) d.classList.remove('open');
+    });
+    badge.nextElementSibling.classList.toggle('open');
+}
+
+// Tutup dropdown saat klik di luar
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.status-wrap')) {
+        document.querySelectorAll('.status-dropdown.open').forEach(d => d.classList.remove('open'));
+    }
+});
+
+async function pilihStatus(item, statusBaru) {
+    const dropdown = item.closest('.status-dropdown');
+    const badge    = dropdown.previousElementSibling;
+    const id       = badge.dataset.id;
+    const row      = badge.closest('tr');
+
+    dropdown.classList.remove('open');
+
+    if (!id) { showToast('ID tidak ditemukan', 'error'); return; }
+
+    // Loading state
+    badge.style.opacity = '0.5';
+    badge.style.pointerEvents = 'none';
+
+    try {
+        const res  = await fetch('?url=admin/kehadiran/updateStatus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status: statusBaru })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            // Update badge tampilan
+            const cfg = statusConfig[statusBaru];
+            badge.className = `badge ${cfg.cls} badge-clickable`;
+            badge.innerHTML = `<i class="bi ${cfg.icon}"></i> ${statusBaru}`;
+            badge.dataset.id = id; // pertahankan data-id
+
+            // Update data-status di row untuk filter
+            row.dataset.status = statusBaru;
+
+            showToast(json.message, 'success');
+        } else {
+            showToast(json.message, 'error');
+        }
+    } catch(e) {
+        showToast('Gagal terhubung ke server', 'error');
+    }
+
+    badge.style.opacity = '1';
+    badge.style.pointerEvents = 'auto';
 }
 </script>
 </body>
