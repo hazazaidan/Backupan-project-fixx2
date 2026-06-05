@@ -300,7 +300,7 @@ let currentPage  = 1;
 const perPage    = 8;
 let filteredData = [...dataSiswa];
 
-// ✅ FIX: variable JS terpisah untuk simpan ID yang akan dihapus
+
 let _hapusId = '';
 
 const avatarColors = ['#4f46e5','#7c3aed','#10b981','#f59e0b','#ef4444','#0d9488','#2563eb','#db2777'];
@@ -485,7 +485,7 @@ function openDetail(id) {
     openModal('modalDetail');
 }
 
-// ✅ FIX: simpan ID ke _hapusId (variable JS), bukan ke dataset HTML attribute
+
 function openHapusBtn(btn) {
     const actualBtn = btn.closest('[data-id]');
     const idSiswa   = actualBtn ? actualBtn.getAttribute('data-id') : null;
@@ -501,7 +501,7 @@ function openHapusBtn(btn) {
     openModal('modalHapus');
 }
 
-// ✅ FIX: ambil ID dari _hapusId (variable JS), bukan dari btn.dataset
+
 async function konfirmHapusNow() {
     const btn        = document.getElementById('btnKonfirmHapus');
     const hapusIdnya = _hapusId;

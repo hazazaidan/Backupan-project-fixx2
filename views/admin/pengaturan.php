@@ -2,18 +2,23 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 date_default_timezone_set('Asia/Jakarta');
 
-$hariLibur = [
-    ['id'=>1,'tanggal'=>'2026-01-01','keterangan'=>'Tahun Baru Masehi'],
-    ['id'=>2,'tanggal'=>'2026-01-27','keterangan'=>'Tahun Baru Imlek'],
-    ['id'=>3,'tanggal'=>'2026-03-28','keterangan'=>'Hari Raya Nyepi'],
-    ['id'=>4,'tanggal'=>'2026-03-29','keterangan'=>'Isra Mi\'raj Nabi Muhammad SAW'],
-    ['id'=>5,'tanggal'=>'2026-04-02','keterangan'=>'Wafat Yesus Kristus'],
-    ['id'=>6,'tanggal'=>'2026-04-03','keterangan'=>'Cuti Bersama Wafat Yesus'],
-    ['id'=>7,'tanggal'=>'2026-05-01','keterangan'=>'Hari Buruh Internasional'],
-    ['id'=>8,'tanggal'=>'2026-05-14','keterangan'=>'Kenaikan Yesus Kristus'],
-    ['id'=>9,'tanggal'=>'2026-06-01','keterangan'=>'Hari Lahir Pancasila'],
-    ['id'=>10,'tanggal'=>'2026-08-17','keterangan'=>'Hari Kemerdekaan RI'],
-];
+// Fallback jika view diakses langsung tanpa controller (dev mode)
+if (!isset($sekolahData)) {
+    $sekolahData = [
+        'nama'      => 'MAN 2 Banyumas',
+        'npsn'      => '20403280',
+        'alamat'    => 'Jl. Pramuka No. 1, Purwokerto, Banyumas 53114',
+        'telepon'   => '(0281) 641260',
+        'email'     => 'man2banyumas@gmail.com',
+        'kepala'    => 'Drs. H. Ahmad Sudirman, M.Pd.',
+        'tahun_ajar'=> '2025/2026',
+    ];
+}
+
+// Fallback hari libur jika controller belum pass data (misal belum ada tabel DB)
+if (!isset($hariLibur) || !is_array($hariLibur)) {
+    $hariLibur = [];
+}
 
 $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>'Jun',
               '07'=>'Jul','08'=>'Agu','09'=>'Sep','10'=>'Okt','11'=>'Nov','12'=>'Des'];
@@ -26,7 +31,6 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
     <title>Pengaturan Sistem – Admin Absensi QR</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <?php require_once __DIR__ . '/../layouts/sidebar_admin.php'; ?>
     <style>
         .settings-grid {
             display: grid;
@@ -57,7 +61,6 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
         .settings-card-header p  { font-size: 11.5px; color: var(--text2); margin: 2px 0 0; }
         .settings-card-body { padding: 20px 22px; }
 
-        /* Time input group */
         .time-group {
             display: flex; gap: 14px;
             margin-bottom: 16px;
@@ -76,14 +79,12 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
         }
         .time-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
 
-        /* Status indicator */
         .time-status {
             font-size: 11.5px; font-weight: 500; margin-top: 6px;
             display: flex; align-items: center; gap: 5px;
         }
         .status-dot { width: 7px; height: 7px; border-radius: 50%; }
 
-        /* Toggle switch */
         .toggle-row {
             display: flex; align-items: center; justify-content: space-between;
             padding: 12px 0; border-bottom: 1px solid #f1f5f9;
@@ -108,7 +109,6 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
         input:checked + .toggle-slider { background: var(--accent); }
         input:checked + .toggle-slider:before { transform: translateX(18px); }
 
-        /* Holiday section */
         .holiday-card {
             background: white;
             border-radius: 16px;
@@ -149,12 +149,12 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
         }
         .holiday-date-badge .hd-day  { font-size: 20px; font-weight: 800; line-height: 1; }
         .holiday-date-badge .hd-bulan{ font-size: 10px; font-weight: 600; opacity: 0.85; margin-top: 1px; }
+        .holiday-date-badge.red-alert { background: linear-gradient(135deg, #dc2626, #991b1b); }
         .holiday-info { flex: 1; min-width: 0; }
         .holiday-info .hi-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
         .holiday-info .hi-full  { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
         .holiday-info .hi-days  { font-size: 11px; font-weight: 600; margin-top: 3px; }
 
-        /* Save bar */
         .save-bar {
             background: white;
             border-radius: 14px;
@@ -169,7 +169,6 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
         .save-bar-info h5 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0; }
         .save-bar-info p  { font-size: 12px; color: var(--text2); margin: 0; }
 
-        /* Profile card */
         .profile-card {
             background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%);
             border-radius: 16px;
@@ -180,16 +179,14 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
             overflow: hidden;
         }
         .profile-card::before {
-            content: '';
-            position: absolute;
+            content: ''; position: absolute;
             top: -30px; right: -30px;
             width: 120px; height: 120px;
             border-radius: 50%;
             background: rgba(255,255,255,0.07);
         }
         .profile-card::after {
-            content: '';
-            position: absolute;
+            content: ''; position: absolute;
             bottom: -20px; right: 40px;
             width: 80px; height: 80px;
             border-radius: 50%;
@@ -206,9 +203,14 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
             background: white; border-radius: 16px;
             padding: 28px; width: 360px; text-align: center;
             box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-            animation: modalIn 0.22s ease;
         }
         .confirm-icon { width: 60px; height: 60px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 26px; color: #dc2626; }
+
+        .toast-container {
+            position: fixed; bottom: 24px; right: 24px;
+            z-index: 9999; display: flex;
+            flex-direction: column; gap: 8px;
+        }
 
         @media (max-width: 900px) {
             .settings-grid { grid-template-columns: 1fr; }
@@ -219,7 +221,9 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
 </head>
 <body>
 <div class="admin-layout">
-    <div class="admin-main">
+    <?php include dirname(__DIR__) . '/layouts/sidebar_admin.php'; ?>
+
+    <main class="admin-main">
 
         <!-- TOPBAR -->
         <div class="admin-topbar">
@@ -235,35 +239,41 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                     <i class="bi bi-bell"></i>
                     <span class="notif-badge">3</span>
                 </div>
-                <div class="topbar-avatar">AD</div>
+                <div class="topbar-avatar">
+                    <?php
+                        $n = $_SESSION['user']['nama'] ?? 'AD';
+                        $parts = explode(' ', $n);
+                        echo strtoupper(implode('', array_map(fn($w)=>$w[0], array_slice($parts,0,2))));
+                    ?>
+                </div>
             </div>
         </div>
 
         <div class="admin-content">
 
-            <!-- PROFILE / INFO CARD -->
+            <!-- PROFILE CARD -->
             <div class="profile-card">
                 <div style="display:flex;align-items:center;gap:16px;position:relative;z-index:1;">
                     <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">
                         <i class="bi bi-gear-wide-connected"></i>
                     </div>
                     <div>
-                        <h3 style="font-size:17px;font-weight:800;margin:0;">Konfigurasi Absensi</h3>
-                        <p style="font-size:12px;opacity:.75;margin:3px 0 0;">MAN 2 Banyumas · Tahun Ajaran 2025/2026</p>
+                        <h3 style="font-size:17px;font-weight:800;margin:0;"><?= htmlspecialchars($sekolahData['nama']) ?></h3>
+                        <p style="font-size:12px;opacity:.75;margin:3px 0 0;">Tahun Ajaran <?= htmlspecialchars($sekolahData['tahun_ajar']) ?></p>
                     </div>
                     <div style="margin-left:auto;display:flex;gap:20px;text-align:center;">
                         <div>
-                            <div style="font-size:22px;font-weight:800;"><?= count($hariLibur) ?></div>
+                            <div style="font-size:22px;font-weight:800;" id="totalLibur"><?= count($hariLibur) ?></div>
                             <div style="font-size:11px;opacity:.7;">Hari Libur</div>
                         </div>
                         <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
                         <div>
-                            <div style="font-size:22px;font-weight:800;">07:00</div>
+                            <div style="font-size:22px;font-weight:800;" id="jamMulaiDisplay">06:30</div>
                             <div style="font-size:11px;opacity:.7;">Jam Masuk</div>
                         </div>
                         <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
                         <div>
-                            <div style="font-size:22px;font-weight:800;">15:30</div>
+                            <div style="font-size:22px;font-weight:800;" id="jamTutupDisplay">17:00</div>
                             <div style="font-size:11px;opacity:.7;">Jam Pulang</div>
                         </div>
                     </div>
@@ -280,16 +290,16 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                     </div>
                 </div>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn-secondary" onclick="resetSemua()">
+                    <button class="btn-secondary" onclick="resetForm()">
                         <i class="bi bi-arrow-counterclockwise"></i> Batal
                     </button>
-                    <button class="btn-primary" onclick="simpanSemua()">
+                    <button class="btn-primary" onclick="simpanPengaturan()">
                         <i class="bi bi-check-lg"></i> Simpan Semua Pengaturan
                     </button>
                 </div>
             </div>
 
-            <!-- SETTINGS GRID: JAM ABSENSI -->
+            <!-- SETTINGS GRID -->
             <div class="settings-grid">
 
                 <!-- JAM DATANG -->
@@ -309,7 +319,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <label>Jam Mulai Absensi</label>
                                 <div class="time-input-wrap">
                                     <i class="bi bi-clock"></i>
-                                    <input type="time" class="time-input" id="jamMulaiDatang" value="06:30" onchange="markChanged()">
+                                    <input type="time" class="time-input" id="jamMulaiDatang" value="06:30" onchange="markChanged(); updateDisplay()">
                                 </div>
                                 <div class="time-status">
                                     <div class="status-dot" style="background:#22c55e;"></div>
@@ -320,7 +330,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <label>Batas Tepat Waktu</label>
                                 <div class="time-input-wrap">
                                     <i class="bi bi-clock-history"></i>
-                                    <input type="time" class="time-input" id="batasTepat" value="07:00" onchange="markChanged()">
+                                    <input type="time" class="time-input" id="batasTepat" value="07:00" onchange="markChanged(); updateTimeline()">
                                 </div>
                                 <div class="time-status">
                                     <div class="status-dot" style="background:#2563eb;"></div>
@@ -333,7 +343,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <label>Batas Terlambat</label>
                                 <div class="time-input-wrap">
                                     <i class="bi bi-exclamation-clock"></i>
-                                    <input type="time" class="time-input" id="batasTerlambat" value="08:00" onchange="markChanged()">
+                                    <input type="time" class="time-input" id="batasTerlambat" value="08:00" onchange="markChanged(); updateTimeline()">
                                 </div>
                                 <div class="time-status">
                                     <div class="status-dot" style="background:#d97706;"></div>
@@ -344,7 +354,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <label>Jam Tutup Absensi</label>
                                 <div class="time-input-wrap">
                                     <i class="bi bi-lock-fill"></i>
-                                    <input type="time" class="time-input" id="jamTutupDatang" value="10:00" onchange="markChanged()">
+                                    <input type="time" class="time-input" id="jamTutupDatang" value="10:00" onchange="markChanged(); updateTimeline()">
                                 </div>
                                 <div class="time-status">
                                     <div class="status-dot" style="background:#dc2626;"></div>
@@ -353,7 +363,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                             </div>
                         </div>
 
-                        <!-- Visual timeline -->
+                        <!-- Timeline -->
                         <div style="margin-top:6px;padding:14px;background:#f5f3ff;border-radius:10px;">
                             <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Timeline Kehadiran</div>
                             <div style="display:flex;align-items:center;gap:0;position:relative;">
@@ -367,11 +377,6 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <span style="font-size:10px;color:var(--text2);" id="lbl2">07:00</span>
                                 <span style="font-size:10px;color:var(--text2);" id="lbl3">08:00</span>
                                 <span style="font-size:10px;color:var(--text2);" id="lbl4">10:00</span>
-                            </div>
-                            <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
-                                <span style="font-size:10.5px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;"></span>Buka – Tepat</span>
-                                <span style="font-size:10.5px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#d97706;display:inline-block;"></span>Terlambat</span>
-                                <span style="font-size:10.5px;display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block;"></span>Tutup</span>
                             </div>
                         </div>
                     </div>
@@ -394,7 +399,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <label>Jam Mulai Absensi Pulang</label>
                                 <div class="time-input-wrap">
                                     <i class="bi bi-clock"></i>
-                                    <input type="time" class="time-input" id="jamMulaiPulang" value="15:00" onchange="markChanged()">
+                                    <input type="time" class="time-input" id="jamMulaiPulang" value="15:00" onchange="markChanged(); updateDisplay()">
                                 </div>
                                 <div class="time-status">
                                     <div class="status-dot" style="background:#22c55e;"></div>
@@ -405,7 +410,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <label>Jam Tutup Absensi Pulang</label>
                                 <div class="time-input-wrap">
                                     <i class="bi bi-lock-fill"></i>
-                                    <input type="time" class="time-input" id="jamTutupPulang" value="17:00" onchange="markChanged()">
+                                    <input type="time" class="time-input" id="jamTutupPulang" value="17:00" onchange="markChanged(); updateDisplay()">
                                 </div>
                                 <div class="time-status">
                                     <div class="status-dot" style="background:#dc2626;"></div>
@@ -423,7 +428,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                     <div class="toggle-desc">Siswa wajib scan QR saat pulang</div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="markChanged()">
+                                    <input type="checkbox" id="wajibPulang" checked onchange="markChanged()">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -433,7 +438,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                     <div class="toggle-desc">Kirim notifikasi ke guru saat siswa belum pulang</div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" onchange="markChanged()">
+                                    <input type="checkbox" id="notifGuru" onchange="markChanged()">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -443,7 +448,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                     <div class="toggle-desc">Otomatis tandai alpha setelah jam tutup</div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" checked onchange="markChanged()">
+                                    <input type="checkbox" id="autoAlpha" checked onchange="markChanged()">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -453,7 +458,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                     <div class="toggle-desc">Aktifkan absensi di hari Sabtu</div>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox" onchange="markChanged()">
+                                    <input type="checkbox" id="absenSabtu" onchange="markChanged()">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -461,7 +466,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                     </div>
                 </div>
 
-                <!-- NOTIFIKASI & TOLERANSI -->
+                <!-- TOLERANSI & NOTIFIKASI -->
                 <div class="settings-card">
                     <div class="settings-card-header">
                         <div class="settings-card-icon" style="background:#dbeafe;">
@@ -487,7 +492,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                         <div class="form-group">
                             <label class="form-label">Batas Alpha Berturut-turut</label>
                             <div style="display:flex;align-items:center;gap:12px;">
-                                <input type="number" class="form-control" value="3" min="1" max="30" style="max-width:100px;" onchange="markChanged()">
+                                <input type="number" class="form-control" id="batasAlpha" value="3" min="1" max="30" style="max-width:100px;" onchange="markChanged()">
                                 <span style="font-size:13px;color:var(--text2);">hari → panggilan orang tua</span>
                             </div>
                         </div>
@@ -497,7 +502,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <div class="toggle-desc">Kirim WA jika siswa tidak hadir</div>
                             </div>
                             <label class="toggle-switch">
-                                <input type="checkbox" checked onchange="markChanged()">
+                                <input type="checkbox" id="notifWA" checked onchange="markChanged()">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -507,7 +512,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                                 <div class="toggle-desc">Kirim rekap ke email kepala sekolah</div>
                             </div>
                             <label class="toggle-switch">
-                                <input type="checkbox" onchange="markChanged()">
+                                <input type="checkbox" id="emailLaporan" onchange="markChanged()">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
@@ -528,26 +533,19 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                     <div class="settings-card-body">
                         <div class="form-group">
                             <label class="form-label">Nama Sekolah</label>
-                            <input type="text" class="form-control" value="MAN 2 Banyumas" onchange="markChanged()">
+                            <input type="text" class="form-control" id="namaSekolah" value="<?= htmlspecialchars($sekolahData['nama']) ?>" onchange="markChanged()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Tahun Ajaran</label>
-                            <input type="text" class="form-control" value="2025/2026" onchange="markChanged()">
+                            <input type="text" class="form-control" id="tahunAjaran" value="<?= htmlspecialchars($sekolahData['tahun_ajar']) ?>" onchange="markChanged()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Kepala Sekolah</label>
-                            <input type="text" class="form-control" value="Drs. H. Ahmad Sudirman, M.Pd" onchange="markChanged()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Semester</label>
-                            <select class="form-control" onchange="markChanged()">
-                                <option selected>Genap (2)</option>
-                                <option>Ganjil (1)</option>
-                            </select>
+                            <input type="text" class="form-control" id="kepalaSekolah" value="<?= htmlspecialchars($sekolahData['kepala']) ?>" onchange="markChanged()">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label">Alamat Sekolah</label>
-                            <textarea class="form-control" rows="2" onchange="markChanged()">Jl. Pramuka No. 1, Purwokerto, Banyumas</textarea>
+                            <textarea class="form-control" rows="2" id="alamatSekolah" onchange="markChanged()"><?= htmlspecialchars($sekolahData['alamat']) ?></textarea>
                         </div>
                     </div>
                 </div>
@@ -563,7 +561,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                         </div>
                         <div>
                             <h3 style="font-size:15px;font-weight:700;color:var(--text);margin:0;">Kelola Hari Libur</h3>
-                            <p style="font-size:12px;color:var(--text2);margin:2px 0 0;"><?= count($hariLibur) ?> hari libur terdaftar tahun 2026</p>
+                            <p style="font-size:12px;color:var(--text2);margin:2px 0 0;"><span id="countLibur"><?= count($hariLibur) ?></span> hari libur terdaftar</p>
                         </div>
                     </div>
                     <button class="btn-primary" id="btnToggleAdd" onclick="toggleAddForm()">
@@ -582,7 +580,7 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                             <input type="date" class="form-control" id="inputTanggalLibur">
                         </div>
                         <div>
-                            <label style="display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Keterangan Hari Libur</label>
+                            <label style="display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Keterangan</label>
                             <input type="text" class="form-control" id="inputKetLibur" placeholder="Contoh: Hari Raya Idul Fitri">
                         </div>
                         <div style="display:flex;gap:8px;padding-top:20px;">
@@ -598,23 +596,28 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
 
                 <!-- LIST HARI LIBUR -->
                 <div id="holidayList">
-                <?php foreach ($hariLibur as $i => $h):
-                    $d = explode('-', $h['tanggal']);
-                    $tglFormatted = date('d F Y', strtotime($h['tanggal']));
+                <?php if (!empty($hariLibur)): ?>
+                <?php foreach ($hariLibur as $h):
+                    $d        = explode('-', $h['tanggal']);
+                    $dateObj  = new DateTime($h['tanggal']);
                     $hariNama = ['Sunday'=>'Minggu','Monday'=>'Senin','Tuesday'=>'Selasa','Wednesday'=>'Rabu','Thursday'=>'Kamis','Friday'=>'Jumat','Saturday'=>'Sabtu'];
-                    $hariStr = $hariNama[date('l', strtotime($h['tanggal']))];
-                    $bulanStr = $bulanIndo[$d[1]];
-                    $selisih = (strtotime($h['tanggal']) - time()) / 86400;
-                    if ($selisih < 0) {
+                    $hariStr  = $hariNama[$dateObj->format('l')];
+                    $tglFormatted = $dateObj->format('d F Y');
+                    $bulanStr = $bulanIndo[$d[1]] ?? $d[1];
+                    $selisih  = ($dateObj->getTimestamp() - time()) / 86400;
+                    $isRed    = $selisih < 30 && $selisih >= 0;
+                    $isGrey   = $selisih < 0;
+                    if ($isGrey) {
                         $daysLabel = 'Sudah lewat'; $daysColor = '#94a3b8';
-                    } elseif ($selisih < 30) {
+                    } elseif ($isRed) {
                         $daysLabel = round($selisih) . ' hari lagi'; $daysColor = '#dc2626';
                     } else {
                         $daysLabel = round($selisih) . ' hari lagi'; $daysColor = '#16a34a';
                     }
+                    $badgeClass = $isRed ? 'red-alert' : '';
                 ?>
                 <div class="holiday-item" id="holiday-<?= $h['id'] ?>">
-                    <div class="holiday-date-badge">
+                    <div class="holiday-date-badge <?= $badgeClass ?>">
                         <div class="hd-day"><?= $d[2] ?></div>
                         <div class="hd-bulan"><?= $bulanStr ?></div>
                     </div>
@@ -623,35 +626,36 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
                         <div class="hi-full"><?= $hariStr ?>, <?= $tglFormatted ?></div>
                         <div class="hi-days" style="color:<?= $daysColor ?>;"><?= $daysLabel ?></div>
                     </div>
-                    <button class="btn-danger btn-sm" onclick="konfirmasiHapusLibur(<?= $h['id'] ?>, '<?= htmlspecialchars($h['keterangan']) ?>')" title="Hapus">
+                    <button class="btn-danger btn-sm" onclick="konfirmasiHapusLibur(<?= $h['id'] ?>, '<?= htmlspecialchars($h['keterangan'], ENT_QUOTES) ?>')" title="Hapus">
                         <i class="bi bi-trash-fill"></i>
                     </button>
                 </div>
                 <?php endforeach; ?>
+                <?php endif; ?>
                 </div>
 
-                <!-- Empty state libur -->
-                <div id="emptyHoliday" style="display:none;" class="empty-state">
+                <!-- Empty state -->
+                <div id="emptyHoliday" style="display:<?= empty($hariLibur) ? 'block' : 'none' ?>;" class="empty-state">
                     <i class="bi bi-calendar-check"></i>
                     <p>Belum ada hari libur terdaftar</p>
                 </div>
             </div>
 
-            <!-- SAVE BOTTOM -->
+            <!-- BOTTOM BUTTONS -->
             <div style="display:flex;justify-content:flex-end;gap:10px;padding-bottom:20px;">
-                <button class="btn-secondary" onclick="resetSemua()">
+                <button class="btn-secondary" onclick="resetForm()">
                     <i class="bi bi-arrow-counterclockwise"></i> Reset ke Default
                 </button>
-                <button class="btn-primary" onclick="simpanSemua()" style="padding:11px 28px;font-size:14px;">
+                <button class="btn-primary" onclick="simpanPengaturan()" style="padding:11px 28px;font-size:14px;">
                     <i class="bi bi-check-circle-fill"></i> Simpan Semua Pengaturan
                 </button>
             </div>
 
         </div>
-    </div>
+    </main>
 </div>
 
-<!-- KONFIRMASI HAPUS LIBUR -->
+<!-- KONFIRMASI HAPUS -->
 <div class="confirm-overlay" id="confirmHapusLibur" onclick="if(event.target===this)closeConfirmLibur()">
     <div class="confirm-box">
         <div class="confirm-icon"><i class="bi bi-calendar-x-fill"></i></div>
@@ -670,127 +674,222 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
     </div>
 </div>
 
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
 <script>
-// ── Timeline labels sync ─────────────────────────────────
-function syncTimeline() {
+let hasChanges = false;
+
+// ===== UTILS =====
+function showToast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.style.cssText = `background:#1e1b4b;color:#fff;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:320px;border-left:4px solid ${type==='success'?'#22c55e':'#ef4444'};font-family:'Poppins',sans-serif;`;
+    toast.innerHTML = `<i class="bi bi-${type==='success'?'check-circle-fill':'exclamation-circle-fill'}"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity .3s';
+    }, 3000);
+    setTimeout(() => toast.remove(), 3350);
+}
+
+function markChanged() {
+    if (!hasChanges) {
+        hasChanges = true;
+        document.getElementById('saveBar').style.display = 'flex';
+    }
+}
+
+function updateTolerasi(val) {
+    document.getElementById('tolerasiVal').textContent = val;
+}
+
+function updateDisplay() {
+    document.getElementById('jamMulaiDisplay').textContent = document.getElementById('jamMulaiDatang').value;
+    document.getElementById('jamTutupDisplay').textContent = document.getElementById('jamTutupPulang').value;
+}
+
+function updateTimeline() {
     document.getElementById('lbl1').textContent = document.getElementById('jamMulaiDatang').value;
     document.getElementById('lbl2').textContent = document.getElementById('batasTepat').value;
     document.getElementById('lbl3').textContent = document.getElementById('batasTerlambat').value;
     document.getElementById('lbl4').textContent = document.getElementById('jamTutupDatang').value;
 }
-['jamMulaiDatang','batasTepat','batasTerlambat','jamTutupDatang'].forEach(id => {
-    document.getElementById(id).addEventListener('change', syncTimeline);
-});
 
-// ── Toleransi slider ─────────────────────────────────────
-function updateTolerasi(val) {
-    document.getElementById('tolerasiVal').textContent = val;
+function resetForm() {
+    hasChanges = false;
+    document.getElementById('saveBar').style.display = 'none';
+    location.reload();
 }
 
-// ── Mark changed → tampilkan save bar ───────────────────
-let hasChanges = false;
-function markChanged() {
-    if (!hasChanges) {
-        hasChanges = true;
-        document.getElementById('saveBar').style.display = 'flex';
-        document.getElementById('saveBar').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+async function simpanPengaturan() {
+    const data = {
+        jam_mulai_datang: document.getElementById('jamMulaiDatang').value,
+        batas_tepat:      document.getElementById('batasTepat').value,
+        batas_terlambat:  document.getElementById('batasTerlambat').value,
+        jam_tutup_datang: document.getElementById('jamTutupDatang').value,
+        jam_mulai_pulang: document.getElementById('jamMulaiPulang').value,
+        jam_tutup_pulang: document.getElementById('jamTutupPulang').value,
+        wajib_pulang:     document.getElementById('wajibPulang').checked,
+        notif_guru:       document.getElementById('notifGuru').checked,
+        auto_alpha:       document.getElementById('autoAlpha').checked,
+        absen_sabtu:      document.getElementById('absenSabtu').checked,
+        toleransi:        parseInt(document.getElementById('toleransiSlider').value),
+        batas_alpha:      parseInt(document.getElementById('batasAlpha').value),
+        notif_wa:         document.getElementById('notifWA').checked,
+        email_laporan:    document.getElementById('emailLaporan').checked,
+        nama_sekolah:     document.getElementById('namaSekolah').value,
+        tahun_ajaran:     document.getElementById('tahunAjaran').value,
+        kepala_sekolah:   document.getElementById('kepalaSekolah').value,
+        alamat_sekolah:   document.getElementById('alamatSekolah').value,
+    };
+
+    try {
+        const res = await fetch('?url=admin/pengaturan/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.success) {
+            hasChanges = false;
+            document.getElementById('saveBar').style.display = 'none';
+            showToast('Semua pengaturan berhasil disimpan!');
+        } else {
+            showToast(json.message || 'Gagal menyimpan pengaturan', 'error');
+        }
+    } catch(e) {
+        showToast('Koneksi ke server gagal', 'error');
     }
-    syncTimeline();
 }
 
-function resetSemua() {
-    hasChanges = false;
-    document.getElementById('saveBar').style.display = 'none';
-    showToast('Perubahan dibatalkan.', 'error');
-}
-
-function simpanSemua() {
-    hasChanges = false;
-    document.getElementById('saveBar').style.display = 'none';
-    showToast('Semua pengaturan berhasil disimpan!');
-    // TODO: submit ke AdminController::savePengaturan()
-}
-
-// ── Add form toggle ──────────────────────────────────────
+// ===== HARI LIBUR =====
 function toggleAddForm() {
     const form = document.getElementById('addForm');
     const btn  = document.getElementById('btnToggleAdd');
     const open = form.classList.toggle('show');
-    btn.innerHTML = open
-        ? '<i class="bi bi-x-lg"></i> Tutup'
-        : '<i class="bi bi-plus-lg"></i> Tambah Hari Libur';
+    btn.innerHTML = open ? '<i class="bi bi-x-lg"></i> Tutup' : '<i class="bi bi-plus-lg"></i> Tambah Hari Libur';
     if (open) form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Tambah hari libur ────────────────────────────────────
-function tambahHariLibur() {
+async function tambahHariLibur() {
     const tgl = document.getElementById('inputTanggalLibur').value;
     const ket = document.getElementById('inputKetLibur').value.trim();
     if (!tgl) { showToast('Pilih tanggal terlebih dahulu!', 'error'); return; }
     if (!ket) { showToast('Isi keterangan hari libur!', 'error'); return; }
 
-    const parts  = tgl.split('-');
-    const bulanMap = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Mei','06':'Jun',
-                      '07':'Jul','08':'Agu','09':'Sep','10':'Okt','11':'Nov','12':'Des'};
-    const hariMap  = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
-    const dateObj  = new Date(tgl);
-    const hariStr  = hariMap[dateObj.getDay()];
-    const tglFull  = hariStr + ', ' + dateObj.toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'});
-    const newId    = Date.now();
-
-    const html = `
-    <div class="holiday-item" id="holiday-${newId}">
-        <div class="holiday-date-badge">
-            <div class="hd-day">${parts[2]}</div>
-            <div class="hd-bulan">${bulanMap[parts[1]] || parts[1]}</div>
-        </div>
-        <div class="holiday-info">
-            <div class="hi-name">${ket}</div>
-            <div class="hi-full">${tglFull}</div>
-            <div class="hi-days" style="color:#16a34a;">Baru ditambahkan</div>
-        </div>
-        <button class="btn-danger btn-sm" onclick="konfirmasiHapusLibur(${newId}, '${ket.replace(/'/g,"\\'")}')" title="Hapus">
-            <i class="bi bi-trash-fill"></i>
-        </button>
-    </div>`;
-
-    document.getElementById('holidayList').insertAdjacentHTML('afterbegin', html);
-    document.getElementById('inputTanggalLibur').value = '';
-    document.getElementById('inputKetLibur').value = '';
-    toggleAddForm();
-    showToast('Hari libur "' + ket + '" berhasil ditambahkan!');
-    document.getElementById('emptyHoliday').style.display = 'none';
+    try {
+        const res = await fetch('?url=admin/pengaturan/tambah-libur', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tanggal: tgl, keterangan: ket })
+        });
+        const json = await res.json();
+        if (json.success) {
+            document.getElementById('inputTanggalLibur').value = '';
+            document.getElementById('inputKetLibur').value = '';
+            toggleAddForm();
+            reloadHariLibur();
+            showToast('Hari libur "' + ket + '" berhasil ditambahkan!');
+        } else {
+            showToast(json.message || 'Gagal menambahkan hari libur', 'error');
+        }
+    } catch(e) {
+        showToast('Koneksi ke server gagal', 'error');
+    }
 }
 
-// ── Hapus hari libur ─────────────────────────────────────
 function konfirmasiHapusLibur(id, nama) {
     document.getElementById('confirmIdLibur').value = id;
     document.getElementById('confirmNamaLibur').textContent = nama;
     document.getElementById('confirmHapusLibur').classList.add('show');
 }
+
 function closeConfirmLibur() {
     document.getElementById('confirmHapusLibur').classList.remove('show');
 }
-function hapusLibur() {
-    const id   = document.getElementById('confirmIdLibur').value;
-    const nama = document.getElementById('confirmNamaLibur').textContent;
+
+async function hapusLibur() {
+    const id = document.getElementById('confirmIdLibur').value;
     closeConfirmLibur();
-    const el = document.getElementById('holiday-' + id);
-    if (el) {
-        el.style.transition = 'opacity 0.3s, transform 0.3s';
-        el.style.opacity = '0';
-        el.style.transform = 'translateX(20px)';
-        setTimeout(() => {
-            el.remove();
-            const remaining = document.querySelectorAll('#holidayList .holiday-item').length;
-            if (remaining === 0) document.getElementById('emptyHoliday').style.display = 'block';
-        }, 300);
+
+    try {
+        const res = await fetch('?url=admin/pengaturan/hapus-libur', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        });
+        const json = await res.json();
+        if (json.success) {
+            reloadHariLibur();
+            showToast('Hari libur berhasil dihapus');
+        } else {
+            showToast(json.message || 'Gagal menghapus hari libur', 'error');
+        }
+    } catch(e) {
+        showToast('Koneksi ke server gagal', 'error');
     }
-    showToast('"' + nama + '" dihapus dari hari libur.', 'error');
+}
+
+async function reloadHariLibur() {
+    try {
+        const res  = await fetch('?url=admin/pengaturan/get-libur');
+        const json = await res.json();
+        if (json.success) {
+            document.getElementById('countLibur').textContent = json.data.length;
+            document.getElementById('totalLibur').textContent = json.data.length;
+            const list = document.getElementById('holidayList');
+            list.innerHTML = '';
+
+            const bulanMap = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'Mei','06':'Jun',
+                              '07':'Jul','08':'Agu','09':'Sep','10':'Okt','11':'Nov','12':'Des'};
+            const hariMap  = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
+
+            json.data.forEach(h => {
+                const d           = h.tanggal.split('-');
+                const dateObj     = new Date(h.tanggal + 'T00:00:00');
+                const hariStr     = hariMap[dateObj.getDay()];
+                const tglFormatted = dateObj.toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'});
+                const bulanStr    = bulanMap[d[1]] ?? d[1];
+                const selisih     = (dateObj.getTime() - new Date().setHours(0,0,0,0)) / 86400000;
+                const isRed       = selisih < 30 && selisih >= 0;
+                const isGrey      = selisih < 0;
+                const daysColor   = isGrey ? '#94a3b8' : (isRed ? '#dc2626' : '#16a34a');
+                const daysLabel   = isGrey ? 'Sudah lewat' : Math.round(selisih) + ' hari lagi';
+                const badgeClass  = isRed ? 'red-alert' : '';
+
+                list.insertAdjacentHTML('beforeend', `
+                <div class="holiday-item" id="holiday-${h.id}">
+                    <div class="holiday-date-badge ${badgeClass}">
+                        <div class="hd-day">${d[2]}</div>
+                        <div class="hd-bulan">${bulanStr}</div>
+                    </div>
+                    <div class="holiday-info">
+                        <div class="hi-name">${h.keterangan}</div>
+                        <div class="hi-full">${hariStr}, ${tglFormatted}</div>
+                        <div class="hi-days" style="color:${daysColor};">${daysLabel}</div>
+                    </div>
+                    <button class="btn-danger btn-sm" onclick="konfirmasiHapusLibur(${h.id}, '${h.keterangan.replace(/'/g,"\\'")}')" title="Hapus">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                </div>`);
+            });
+
+            document.getElementById('emptyHoliday').style.display = json.data.length === 0 ? 'block' : 'none';
+        }
+    } catch(e) {
+        console.error(e);
+    }
 }
 
 // ESC close
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirmLibur(); });
+
+// Init
+updateDisplay();
+updateTimeline();
 </script>
+
 </body>
 </html>

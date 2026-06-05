@@ -93,13 +93,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 /* ── SIDEBAR ── */
 .sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);position:fixed;top:0;left:0;bottom:0;z-index:100;display:flex;flex-direction:column;transition:.3s ease;}
 .brand{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.06);}
-/* ✅ DIUBAH: brand-ico dari gradient ungu-biru → solid biru */
+
 .brand-ico{width:40px;height:40px;border-radius:11px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .brand-ico i{color:#fff;font-size:17px;}
 .brand strong{color:#fff;font-size:14px;font-weight:800;display:block;letter-spacing:-.2px;}
 .brand span{color:rgba(255,255,255,.3);font-size:10px;font-weight:500;}
 .ucard{margin:10px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;}
-/* ✅ DIUBAH: uav dari gradient ungu-biru → solid biru */
+
 .uav{width:38px;height:38px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .ucard strong{color:#fff;font-size:12px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
 .ucard span{color:rgba(255,255,255,.3);font-size:10px;font-weight:500;}
@@ -126,7 +126,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .ibtn{width:38px;height:38px;border-radius:var(--radius-xs);border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;position:relative;}
 .ibtn:hover{background:var(--primary-soft);border-color:var(--primary-mid);color:var(--primary);}
 .notif-dot{position:absolute;top:8px;right:8px;width:7px;height:7px;background:#ef4444;border-radius:50%;border:2px solid #fff;}
-/* ✅ DIUBAH: tav dari gradient ungu-biru → solid biru */
+
 .tav{width:38px;height:38px;border-radius:var(--radius-xs);background:var(--primary);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 
 /* ── TANGGAL BADGE ── */

@@ -119,7 +119,7 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
         .chart-card { background: white; border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
         .chart-card h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
 
-        /* ✅ STATUS DROPDOWN */
+        
         .status-wrap { position: relative; display: inline-block; }
         .badge-clickable {
             cursor: pointer;
@@ -407,7 +407,7 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                                     <?php endif; ?>
                                 </td>
 
-                                <!-- ✅ KOLOM STATUS: badge bisa diklik -->
+                                
                                 <td>
                                     <?php if (!empty($kehadiranId)): ?>
                                     <div class="status-wrap">
@@ -648,7 +648,7 @@ function doExport() {
     showToast('File "' + fname + '.' + (currentExportType === 'excel' ? 'xlsx' : 'pdf') + '" sedang diunduh...');
 }
 
-// ✅ STATUS DROPDOWN LOGIC ────────────────────────────────
+
 const statusConfig = {
     'Hadir'     : { cls: 'status-hadir',     icon: 'bi-check-circle-fill' },
     'Terlambat' : { cls: 'status-terlambat', icon: 'bi-clock-fill'        },

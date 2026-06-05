@@ -35,7 +35,7 @@ function inisialSiswa($nama_siswa) {
     return strtoupper(($w[0][0] ?? '') . ($w[1][0] ?? ''));
 }
 
-// ✅ DATA DARI SUPABASE (dikirim DashboardController)
+
 $totalSiswa    = $totalSiswa    ?? 0;
 $hadirHariIni  = $hadirHariIni  ?? 0;
 $izinSakit     = $izinSakit     ?? 0;
@@ -170,7 +170,7 @@ $warnaList = ['#6366f1','#0ea5e9','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef44
         <p class="nav-section-label">Menu Utama</p>
         <nav>
             <a href="?url=guru/dashboard"  class="nav-item active"><i class="fa fa-home nav-icon"></i> Dashboard</a>
-            <!-- ✅ DIUBAH: Scan QR → Kelas -->
+            
             <a href="?url=guru/kelas"      class="nav-item"><i class="fa fa-door-open nav-icon"></i> Kelas</a>
             <a href="?url=guru/riwayat"    class="nav-item"><i class="fa fa-clock-rotate-left nav-icon"></i> Riwayat Absensi</a>
             <a href="?url=guru/rekap"      class="nav-item"><i class="fa fa-layer-group nav-icon"></i> Rekap Kelas</a>
@@ -215,13 +215,13 @@ $warnaList = ['#6366f1','#0ea5e9','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef44
             <!-- ROW 1: CTA Kelas + 3 Stat Cards -->
             <div class="grid gap-5" style="grid-template-columns: 280px 1fr 1fr 1fr;">
 
-                <!-- ✅ DIUBAH: CTA card → Mulai Absensi (mengarah ke guru/kelas) -->
+                
                 <div class="scan-card">
                     <div>
                         <p class="text-xs font-semibold opacity-70 uppercase tracking-widest mb-1">ABSENSI</p>
                         <h2 class="text-2xl font-bold leading-tight">Mulai Absensi</h2>
                         <p class="text-sm opacity-80 mt-1">Pilih kelas dan mata pelajaran<br>untuk memulai absensi siswa.</p>
-                        <!-- ✅ DIUBAH: href → guru/kelas -->
+                        
                         <button class="scan-btn" onclick="window.location.href='?url=guru/kelas'">
                             <i class="fa fa-door-open"></i> Mulai Absensi
                         </button>

@@ -27,6 +27,10 @@ $warnaList = ['#6366f1','#0ea5e9','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef44
     <title>Rekap Kelas – Absensi QR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <!-- Library Export (sama seperti riwayat.php) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -277,6 +281,7 @@ $warnaList = ['#6366f1','#0ea5e9','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef44
 </div>
 
 <script>
+// ── toggleDetail — tidak diubah ────────────────────────────────────────────
 function toggleDetail(id, row) {
     const el   = document.getElementById(id);
     const chev = document.getElementById('chev-' + id);
@@ -284,8 +289,152 @@ function toggleDetail(id, row) {
     el.style.display   = open ? 'none' : 'block';
     chev.classList.toggle('open', !open);
 }
+
+// ── Data dari PHP (sama pola dengan riwayat.php) ───────────────────────────
+const kelasList  = <?= json_encode($kelasList)  ?>;
+const bulanLabel = <?= json_encode($bulanLabel) ?>;
+const namaGuru   = <?= json_encode($nama) ?>;
+const sekolah    = 'MAN 2 Banyumas';
+
+// ── Router export ──────────────────────────────────────────────────────────
 function exportRekap(format) {
-    alert('Export ' + format.toUpperCase() + ' segera hadir!');
+    if (format === 'xlsx') exportExcel();
+    else if (format === 'pdf') exportPDF();
+}
+
+// ── EXPORT EXCEL — SheetJS (sama seperti riwayat.php) ─────────────────────
+function exportExcel() {
+    if (!kelasList.length) { alert('Tidak ada data!'); return; }
+
+    const rows = [];
+
+    kelasList.forEach((k, i) => {
+        // Baris ringkasan per kelas
+        rows.push({
+            'No'          : i + 1,
+            'Kelas'       : k.nama_kelas,
+            'Total Siswa' : k.total_siswa  ?? 0,
+            'Hadir'       : k.hadir        ?? 0,
+            'Terlambat'   : k.terlambat    ?? 0,
+            'Izin/Sakit'  : k.izin         ?? 0,
+            'Alpha'       : k.alpha        ?? 0,
+            '% Kehadiran' : (k.persen      ?? 0) + '%',
+            'Nama Siswa'  : '',
+            'NIS'         : '',
+        });
+
+        // Baris detail siswa
+        if (k.siswa && k.siswa.length > 0) {
+            k.siswa.forEach(s => {
+                rows.push({
+                    'No'          : '',
+                    'Kelas'       : '  ' + k.nama_kelas,
+                    'Total Siswa' : '',
+                    'Hadir'       : s.hadir      ?? 0,
+                    'Terlambat'   : s.terlambat  ?? 0,
+                    'Izin/Sakit'  : s.izin       ?? 0,
+                    'Alpha'       : s.alpha      ?? 0,
+                    '% Kehadiran' : '',
+                    'Nama Siswa'  : s.nama,
+                    'NIS'         : s.nis,
+                });
+            });
+        }
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Rekap Kelas');
+
+    // Auto column width
+    const maxW = rows.reduce((acc, row) => {
+        Object.keys(row).forEach((k, i) => {
+            acc[i] = Math.max(acc[i] || 10, String(row[k]).length + 2);
+        });
+        return acc;
+    }, []);
+    ws['!cols'] = maxW.map(w => ({ wch: w }));
+
+    XLSX.writeFile(wb, 'Rekap_Kelas_' + bulanLabel.replace(' ', '_') + '.xlsx');
+}
+
+// ── EXPORT PDF — jsPDF + autoTable (sama seperti riwayat.php) ─────────────
+function exportPDF() {
+    if (!kelasList.length) { alert('Tidak ada data!'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    // Header dokumen
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Rekap Kehadiran Kelas \u2013 ' + bulanLabel, 14, 16);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(150);
+    doc.text(sekolah + '   |   Guru: ' + namaGuru, 14, 22);
+    doc.text('Dicetak: ' + new Date().toLocaleDateString('id-ID', {day:'2-digit',month:'long',year:'numeric'}), 14, 27);
+    doc.setTextColor(0);
+
+    // Bangun baris tabel
+    const body = [];
+    kelasList.forEach((k, i) => {
+        // Baris kelas
+        body.push([
+            i + 1,
+            k.nama_kelas,
+            k.total_siswa  ?? 0,
+            k.hadir        ?? 0,
+            k.terlambat    ?? 0,
+            k.izin         ?? 0,
+            k.alpha        ?? 0,
+            (k.persen      ?? 0) + '%',
+        ]);
+
+        // Baris detail siswa
+        if (k.siswa && k.siswa.length > 0) {
+            k.siswa.forEach(s => {
+                body.push([
+                    '',
+                    '  \u21b3 ' + s.nama + ' (' + s.nis + ')',
+                    '',
+                    s.hadir     ?? 0,
+                    s.terlambat ?? 0,
+                    s.izin      ?? 0,
+                    s.alpha     ?? 0,
+                    '',
+                ]);
+            });
+        }
+    });
+
+    doc.autoTable({
+        startY      : 33,
+        head        : [['No','Kelas','Siswa','Hadir','Terlambat','Izin/Sakit','Alpha','% Hadir']],
+        body        : body,
+        styles      : { fontSize: 9, cellPadding: 4 },
+        headStyles  : { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 10 },
+            2: { halign: 'center' },
+            3: { halign: 'center' },
+            4: { halign: 'center' },
+            5: { halign: 'center' },
+            6: { halign: 'center' },
+            7: { halign: 'center', fontStyle: 'bold' },
+        },
+        didParseCell: (data) => {
+            // Warnai baris detail siswa
+            if (data.section === 'body' && String(data.cell.raw).includes('\u21b3')) {
+                data.cell.styles.textColor = [37, 99, 235];
+                data.cell.styles.fontSize  = 8;
+            }
+        },
+    });
+
+    doc.save('Rekap_Kelas_' + bulanLabel.replace(' ', '_') + '.pdf');
 }
 </script>
 </body>

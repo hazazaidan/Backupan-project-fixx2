@@ -1,0 +1,20 @@
+{
+    "jam_mulai_datang": "06:30",
+    "batas_tepat": "07:00",
+    "batas_terlambat": "08:00",
+    "jam_tutup_datang": "10:00",
+    "jam_mulai_pulang": "15:00",
+    "jam_tutup_pulang": "17:00",
+    "wajib_pulang": true,
+    "notif_guru": false,
+    "auto_alpha": true,
+    "absen_sabtu": false,
+    "toleransi": 10,
+    "batas_alpha": 3,
+    "notif_wa": true,
+    "email_laporan": false,
+    "nama_sekolah": "MAN 2 Banyumas",
+    "tahun_ajaran": "2025\/2026",
+    "kepala_sekolah": "Drs. H. Ahmad Sudirman, M.Pd.",
+    "alamat_sekolah": "Jl. Pramuka No. 1, Purwokerto, Banyumas 53114"
+}

@@ -29,7 +29,6 @@ class Kelas {
         return $response;
     }
 
-    // ✅ FIX: baca kelas dari tabel `kelas` where wali_kelas = nama guru
     public function getByGuru($guruId): array {
         // Ambil nama guru dari tabel guru
         $guruResp = Database::request("GET",
@@ -64,7 +63,6 @@ class Kelas {
         return $result;
     }
 
-    // ✅ FIX: getMapelByGuruKelas pakai nama_kelas (bukan id) karena jadwal pakai kolom kelas (text)
     public function getMapelByGuruKelas($guruId, string $kelas): array {
         // Coba cari di jadwal pakai nama kelas langsung
         $response = Database::request(

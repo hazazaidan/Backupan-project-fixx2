@@ -10,9 +10,7 @@
 
 define('SUPABASE_URL',  'https://vcsyfgietumjcgjpxxxo.supabase.co');
 
-// ⚠️  Ganti nilai ini dengan service_role key dari:
-//     Supabase Dashboard → Settings → API → service_role (secret)
-// JANGAN pakai anon key untuk backend – service_role yang bisa bypass RLS
+
 define('SUPABASE_KEY',  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjc3lmZ2lldHVtamNnanB4eHhvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODA0ODAwMSwiZXhwIjoyMDkzNjI0MDAxfQ.0J7ZDyflvzgrVAKWe2JJpNAoGEA4lkpbeCo2fJHWZS0');
 
 // Anon key (untuk frontend / publik jika diperlukan)

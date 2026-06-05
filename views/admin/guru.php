@@ -25,7 +25,7 @@ function guruInitials(string $nama): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Guru – Absensi QR Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- ✅ FIX: Hanya pakai Bootstrap Icons, BUKAN Bootstrap CSS (penyebab conflict .modal) -->
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
     :root {
@@ -84,7 +84,7 @@ function guruInitials(string $nama): string {
     .badge-wali{background:#ede9fe;color:#7c3aed;}
     .badge-nonwali{background:#f3f4f6;color:#9ca3af;}
 
-    /* ✅ FIX: btn-primary-custom tidak pakai Bootstrap, styling manual */
+    
     .btn-primary-custom{background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;font-family:inherit;}
     .btn-primary-custom:hover{background:#4338ca;box-shadow:0 4px 12px rgba(79,70,229,.35);}
     .btn-act{border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
@@ -109,8 +109,7 @@ function guruInitials(string $nama): string {
     .empty-state i{font-size:42px;display:block;margin-bottom:14px;opacity:.35;}
     .empty-state p{font-size:14px;margin:0;}
 
-    /* ✅ FIX UTAMA: Modal tidak pakai class 'modal' agar tidak conflict Bootstrap
-       Semua modal menggunakan class 'modal-overlay' saja seperti Data Siswa */
+
     .modal-overlay{
         display:none;
         position:fixed;
@@ -131,7 +130,7 @@ function guruInitials(string $nama): string {
         overflow-y:auto;
         box-shadow:0 25px 60px rgba(0,0,0,.2);
         animation:modalIn .22s ease;
-        /* ✅ FIX: position relative agar stacking context benar */
+        
         position:relative;
     }
     @keyframes modalIn{from{transform:scale(.94) translateY(12px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
@@ -286,7 +285,7 @@ function guruInitials(string $nama): string {
                                 <th style="text-align:right;">Aksi</th>
                             </tr>
                         </thead>
-                        <!-- ✅ FIX: Render via JS seperti Data Siswa agar consistent -->
+                        
                         <tbody id="guruTbody"></tbody>
                     </table>
                     <div class="empty-state" id="emptyState" style="display:none;">
@@ -439,7 +438,6 @@ function guruInitials(string $nama): string {
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
 <script>
-// ✅ FIX: Data guru di-inject ke JS seperti pola Data Siswa (client-side rendering)
 let dataGuru = <?= json_encode(array_values(array_filter(array_map(fn($g) => [
     'id'    => $g['id']         ?? '',
     'nama'  => $g['nama']       ?? '-',
@@ -582,7 +580,6 @@ function showToast(msg, type = 'success') {
 // ===== MODAL =====
 function openModal(id) {
     document.getElementById(id).classList.add('show');
-    // ✅ FIX: clear semua input saat modal dibuka agar Chrome autofill tidak tersisa
     if (id === 'modalTambah') {
         ['addNama','addNip','addEmail','addHp','addPassword'].forEach(fid => {
             const el = document.getElementById(fid);
@@ -750,9 +747,6 @@ function toggleSidebar() {
 filteredData = [...dataGuru];
 renderTable();
 
-// ✅ FIX PERMANEN: inject input SETELAH window fully loaded
-// pakai window.addEventListener load agar Chrome autofill sudah selesai jalan
-// lalu inject input baru yang Chrome tidak kenal
 window.addEventListener('load', function() {
     setTimeout(function() {
         const wrap = document.getElementById('searchWrap');

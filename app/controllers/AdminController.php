@@ -253,16 +253,22 @@ class AdminController
         exit;
     }
 
+    // =========================================================
+    //  FIX: updateSiswa — tambah cek NIS duplikat (exclude ID sendiri)
+    //  + strip non-digit dari NIS sebelum validasi
+    //  + tampilkan debug response jika gagal
+    // =========================================================
     public function updateSiswa(): void
     {
         $this->requireAuth();
         header('Content-Type: application/json');
 
         $body  = json_decode(file_get_contents('php://input'), true) ?? [];
-        $id    = trim($body['id']              ?? '');
-        $nama  = trim($body['nama']            ?? '');
-        $nis   = trim($body['nisn'] ?? $body['nis'] ?? '');
-        $kelas = trim($body['kelas']           ?? '');
+        $id    = trim($body['id']   ?? '');
+        $nama  = trim($body['nama'] ?? '');
+        // FIX 1: strip karakter non-digit dari NIS (misal spasi tersembunyi)
+        $nis   = preg_replace('/\D/', '', trim($body['nisn'] ?? $body['nis'] ?? ''));
+        $kelas = trim($body['kelas'] ?? '');
 
         if (!$id || !$nama || !$nis || !$kelas) {
             echo json_encode(['success' => false, 'message' => 'Data tidak lengkap']);
@@ -274,14 +280,32 @@ class AdminController
             exit;
         }
 
+        // FIX 2: cek duplikat NIS — exclude ID siswa yang sedang diedit
+        $cekNis = Database::request('GET', 'students?nis=eq.' . urlencode($nis) . '&id=neq.' . urlencode($id) . '&select=id&limit=1');
+        if (is_array($cekNis) && !isset($cekNis['error']) && count($cekNis) > 0) {
+            echo json_encode(['success' => false, 'message' => 'NIS ' . $nis . ' sudah digunakan siswa lain']);
+            exit;
+        }
+
         $update = Database::request('PATCH', 'students?id=eq.' . urlencode($id), [
             'nama'  => $nama,
             'nis'   => (int) $nis,
             'kelas' => $kelas,
         ]);
 
+        // FIX 3: tampilkan detail error dari Supabase jika gagal
         if (!$this->isSuccess($update)) {
-            echo json_encode(['success' => false, 'message' => 'Gagal mengupdate data siswa']);
+            $errMsg = 'Gagal mengupdate data siswa';
+            if (isset($update['response']['message'])) {
+                $errMsg .= ': ' . $update['response']['message'];
+            } elseif (isset($update['response']['hint'])) {
+                $errMsg .= ': ' . $update['response']['hint'];
+            }
+            echo json_encode([
+                'success' => false,
+                'message' => $errMsg,
+                'debug'   => $update,
+            ]);
             exit;
         }
 
@@ -720,28 +744,44 @@ class AdminController
     {
         $this->requireAuth();
 
+        // Load config dari file JSON jika ada, fallback ke default
+        $configPath = BASE_PATH . '/storage/pengaturan.json';
+        $config     = [];
+        if (file_exists($configPath)) {
+            $decoded = json_decode(file_get_contents($configPath), true);
+            if (is_array($decoded)) $config = $decoded;
+        }
+
+        // Load hari libur dari Supabase
+        $respLibur  = Database::request('GET', 'hari_libur?order=tanggal.asc');
+        $hariLibur  = (!empty($respLibur) && !isset($respLibur['error']) && is_array($respLibur))
+                      ? $respLibur
+                      : [];
+
         $data = [
             'pageTitle' => 'Pengaturan Sistem',
+            'config'    => $config,
+            'hariLibur' => $hariLibur,
             'sekolah'   => [
-                'nama'       => 'SMA Negeri 1 Yogyakarta',
+                'nama'       => $config['nama_sekolah'] ?? 'SMA Negeri 1 Yogyakarta',
                 'npsn'       => '20403280',
-                'alamat'     => 'Jl. HOS Cokroaminoto No. 10, Pakuncen, Wirobrajan, Yogyakarta',
+                'alamat'     => $config['alamat_sekolah'] ?? 'Jl. HOS Cokroaminoto No. 10, Pakuncen, Wirobrajan, Yogyakarta',
                 'telepon'    => '(0274) 513448',
                 'email'      => 'info@sman1yk.sch.id',
                 'website'    => 'https://sman1yogya.sch.id',
-                'kepala'     => 'Drs. H. Mujiyono, M.Pd.',
-                'tahun_ajar' => '2024/2025',
-                'semester'   => 'Genap',
+                'kepala'     => $config['kepala_sekolah'] ?? 'Drs. H. Mujiyono, M.Pd.',
+                'tahun_ajar' => $config['tahun_ajaran']   ?? '2024/2025',
+                'semester'   => $config['semester']        ?? 'Genap',
                 'logo'       => 'assets/img/logo-sekolah.png',
             ],
             'absensi' => [
-                'jam_masuk'        => '07:00',
-                'jam_toleransi'    => '07:15',
-                'jam_pulang'       => '14:30',
+                'jam_masuk'        => $config['batas_tepat']      ?? '07:00',
+                'jam_toleransi'    => $config['batas_terlambat']  ?? '07:15',
+                'jam_pulang'       => $config['jam_mulai_pulang'] ?? '14:30',
                 'hari_aktif'       => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
                 'qr_expired_menit' => 30,
-                'notif_alpha_wa'   => true,
-                'auto_alpha'       => true,
+                'notif_alpha_wa'   => $config['notif_wa']   ?? true,
+                'auto_alpha'       => $config['auto_alpha'] ?? true,
             ],
             'adminAccounts' => [
                 ['id' => 1, 'nama' => 'Super Admin',  'email' => 'superadmin@sekolah.sch.id', 'role' => 'Super Admin', 'status' => 'Aktif',    'last_login' => '2025-05-14 08:32'],
@@ -751,6 +791,128 @@ class AdminController
         ];
 
         $this->view('admin/pengaturan', $data);
+    }
+
+    // =========================================================
+    //  PENGATURAN — SAVE
+    // =========================================================
+
+    public function savePengaturan(): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        if (empty($body)) {
+            echo json_encode(['success' => false, 'message' => 'Data kosong']);
+            exit;
+        }
+
+        $configPath = BASE_PATH . '/storage/pengaturan.json';
+        $dir        = dirname($configPath);
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $saved = file_put_contents($configPath, json_encode($body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        if ($saved === false) {
+            echo json_encode(['success' => false, 'message' => 'Gagal menulis file konfigurasi. Pastikan folder storage/ writable.']);
+            exit;
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Pengaturan berhasil disimpan']);
+        exit;
+    }
+
+    // =========================================================
+    //  PENGATURAN — TAMBAH HARI LIBUR
+    // =========================================================
+
+    public function tambahLibur(): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+
+        $body    = json_decode(file_get_contents('php://input'), true) ?? [];
+        $tanggal = trim($body['tanggal']    ?? '');
+        $ket     = trim($body['keterangan'] ?? '');
+
+        if (!$tanggal || !$ket) {
+            echo json_encode(['success' => false, 'message' => 'Tanggal dan keterangan wajib diisi']);
+            exit;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) {
+            echo json_encode(['success' => false, 'message' => 'Format tanggal tidak valid']);
+            exit;
+        }
+
+        // Cek duplikat tanggal
+        $cek = Database::request('GET', 'hari_libur?tanggal=eq.' . urlencode($tanggal) . '&select=id&limit=1');
+        if (is_array($cek) && !isset($cek['error']) && count($cek) > 0) {
+            echo json_encode(['success' => false, 'message' => 'Tanggal ' . $tanggal . ' sudah terdaftar sebagai hari libur']);
+            exit;
+        }
+
+        $insert = Database::request('POST', 'hari_libur', [
+            'tanggal'    => $tanggal,
+            'keterangan' => $ket,
+        ]);
+
+        if (!$this->isSuccess($insert)) {
+            echo json_encode(['success' => false, 'message' => 'Gagal menyimpan hari libur', 'debug' => $insert]);
+            exit;
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Hari libur berhasil ditambahkan']);
+        exit;
+    }
+
+    // =========================================================
+    //  PENGATURAN — HAPUS HARI LIBUR
+    // =========================================================
+
+    public function hapusLibur(): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id   = trim($body['id'] ?? '');
+
+        if (!$id) {
+            echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
+            exit;
+        }
+
+        $delete = Database::request('DELETE', 'hari_libur?id=eq.' . urlencode($id));
+
+        if (!$this->isSuccess($delete)) {
+            echo json_encode(['success' => false, 'message' => 'Gagal menghapus hari libur']);
+            exit;
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Hari libur berhasil dihapus']);
+        exit;
+    }
+
+    // =========================================================
+    //  PENGATURAN — GET HARI LIBUR (reload list via AJAX)
+    // =========================================================
+
+    public function getLibur(): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+
+        $resp = Database::request('GET', 'hari_libur?order=tanggal.asc');
+        $data = (!empty($resp) && !isset($resp['error']) && is_array($resp)) ? $resp : [];
+
+        echo json_encode(['success' => true, 'data' => $data]);
+        exit;
     }
 
     // =========================================================
