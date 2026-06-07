@@ -82,11 +82,11 @@ class App {
             'dashboard'               => ['DashboardController', 'index'],
             'guru/dashboard'          => ['DashboardController', 'index'],
 
-            // ── KELAS (BARU) ──────────────────────────────────────
+            // ── KELAS ─────────────────────────────────────────────
             'kelas'                   => ['AbsensiController', 'kelasPage'],
             'guru/kelas'              => ['AbsensiController', 'kelasPage'],
 
-            // ── ABSENSI (BARU) ────────────────────────────────────
+            // ── ABSENSI ───────────────────────────────────────────
             'absensi'                 => ['AbsensiController', 'absensiPage'],
             'guru/absensi'            => ['AbsensiController', 'absensiPage'],
             'absensi/submit'          => ['AbsensiController', 'submitAbsensi'],
@@ -114,8 +114,12 @@ class App {
             'guru/monitoring'         => ['MonitoringController', 'index'],
 
             // ── PENGATURAN ────────────────────────────────────────
-            'pengaturan'              => ['PengaturanController', 'index'],
-            'guru/pengaturan'         => ['PengaturanController', 'index'],
+            'pengaturan'                    => ['PengaturanController', 'index'],
+            'guru/pengaturan'               => ['PengaturanController', 'index'],
+            'pengaturan/updateProfil'       => ['PengaturanController', 'updateProfil'],
+            'guru/pengaturan/updateProfil'  => ['PengaturanController', 'updateProfil'],
+            'pengaturan/gantiPassword'      => ['PengaturanController', 'gantiPassword'],
+            'guru/pengaturan/gantiPassword' => ['PengaturanController', 'gantiPassword'],
 
             // ── PLACEHOLDER ───────────────────────────────────────
             'guru/jadwal'             => ['DashboardController', 'index'],

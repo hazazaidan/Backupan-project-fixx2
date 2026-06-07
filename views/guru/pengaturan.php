@@ -63,7 +63,6 @@
     <div class="card" style="margin-bottom:20px;padding:24px;
          background:linear-gradient(135deg,#1e40af 0%,#2563eb 60%,#3b82f6 100%);
          border:none;position:relative;overflow:hidden;">
-      <!-- decorative circles -->
       <div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;
                   border-radius:50%;background:rgba(255,255,255,.07);"></div>
       <div style="position:absolute;bottom:-50px;right:80px;width:180px;height:180px;
@@ -77,10 +76,10 @@
         </div>
         <div>
           <h2 style="font-size:18px;font-weight:700;color:#fff;">
-            <?= htmlspecialchars($data['user']['nama'] ?? 'Nama Guru') ?>
+            <?= htmlspecialchars($user['nama'] ?? 'Nama Guru') ?>
           </h2>
           <p style="font-size:12px;color:rgba(255,255,255,.75);margin-top:3px;">
-            <?= htmlspecialchars($data['user']['email'] ?? '') ?>
+            <?= htmlspecialchars($user['email'] ?? '') ?>
           </p>
           <span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;
                        background:rgba(255,255,255,.15);border-radius:99px;
@@ -114,29 +113,25 @@
 
           <div>
             <label style="font-size:12px;font-weight:600;color:#475569;
-                          display:block;margin-bottom:6px;">
-              Nama Lengkap
-            </label>
+                          display:block;margin-bottom:6px;">Nama Lengkap</label>
             <div style="position:relative;">
               <i data-lucide="user" style="position:absolute;left:11px;top:50%;
                  transform:translateY(-50%);width:15px;height:15px;color:#94a3b8;pointer-events:none;"></i>
               <input type="text" name="nama" class="form-input"
                      style="padding-left:34px;"
-                     value="<?= htmlspecialchars($data['user']['nama'] ?? '') ?>" required>
+                     value="<?= htmlspecialchars($user['nama'] ?? '') ?>" required>
             </div>
           </div>
 
           <div>
             <label style="font-size:12px;font-weight:600;color:#475569;
-                          display:block;margin-bottom:6px;">
-              Email
-            </label>
+                          display:block;margin-bottom:6px;">Email</label>
             <div style="position:relative;">
               <i data-lucide="mail" style="position:absolute;left:11px;top:50%;
                  transform:translateY(-50%);width:15px;height:15px;color:#94a3b8;pointer-events:none;"></i>
               <input type="email" name="email" class="form-input"
                      style="padding-left:34px;"
-                     value="<?= htmlspecialchars($data['user']['email'] ?? '') ?>" required>
+                     value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
             </div>
           </div>
 
@@ -168,9 +163,7 @@
           <!-- Password Lama -->
           <div>
             <label style="font-size:12px;font-weight:600;color:#475569;
-                          display:block;margin-bottom:6px;">
-              Password Lama
-            </label>
+                          display:block;margin-bottom:6px;">Password Lama</label>
             <div style="position:relative;">
               <i data-lucide="lock" style="position:absolute;left:11px;top:50%;
                  transform:translateY(-50%);width:15px;height:15px;color:#94a3b8;pointer-events:none;"></i>
@@ -188,9 +181,7 @@
           <!-- Password Baru -->
           <div>
             <label style="font-size:12px;font-weight:600;color:#475569;
-                          display:block;margin-bottom:6px;">
-              Password Baru
-            </label>
+                          display:block;margin-bottom:6px;">Password Baru</label>
             <div style="position:relative;">
               <i data-lucide="lock-keyhole" style="position:absolute;left:11px;top:50%;
                  transform:translateY(-50%);width:15px;height:15px;color:#94a3b8;pointer-events:none;"></i>
@@ -215,9 +206,7 @@
           <!-- Konfirmasi -->
           <div>
             <label style="font-size:12px;font-weight:600;color:#475569;
-                          display:block;margin-bottom:6px;">
-              Konfirmasi Password Baru
-            </label>
+                          display:block;margin-bottom:6px;">Konfirmasi Password Baru</label>
             <div style="position:relative;">
               <i data-lucide="shield-check" style="position:absolute;left:11px;top:50%;
                  transform:translateY(-50%);width:15px;height:15px;color:#94a3b8;pointer-events:none;"></i>
@@ -296,7 +285,7 @@ document.querySelectorAll('.toggle-pass').forEach(btn => {
 });
 
 // Password strength
-const passBaru = document.getElementById('passBaru');
+const passBaru      = document.getElementById('passBaru');
 const strengthBar   = document.getElementById('strengthBar');
 const strengthLabel = document.getElementById('strengthLabel');
 const strengthWrap  = document.getElementById('strengthWrap');
@@ -334,12 +323,12 @@ function checkMatch() {
   if (!passKonfirm.value) { matchMsg.style.display = 'none'; return; }
   matchMsg.style.display = 'block';
   if (passBaru.value === passKonfirm.value) {
-    matchMsg.textContent   = '✓ Password cocok';
-    matchMsg.style.color   = '#16a34a';
+    matchMsg.textContent          = '✓ Password cocok';
+    matchMsg.style.color          = '#16a34a';
     passKonfirm.style.borderColor = '#16a34a';
   } else {
-    matchMsg.textContent   = '✗ Password tidak cocok';
-    matchMsg.style.color   = '#dc2626';
+    matchMsg.textContent          = '✗ Password tidak cocok';
+    matchMsg.style.color          = '#dc2626';
     passKonfirm.style.borderColor = '#dc2626';
   }
 }

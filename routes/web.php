@@ -114,6 +114,19 @@ switch ($url) {
         (new PengaturanController())->index();
         break;
 
+    // ── PENGATURAN ACTIONS (BARU) ──────────────────────────────────
+    case 'pengaturan/updateProfil':
+    case 'guru/pengaturan/updateProfil':
+        require_once BASE_PATH . '/app/controllers/PengaturanController.php';
+        (new PengaturanController())->updateProfil();
+        break;
+
+    case 'pengaturan/gantiPassword':
+    case 'guru/pengaturan/gantiPassword':
+        require_once BASE_PATH . '/app/controllers/PengaturanController.php';
+        (new PengaturanController())->gantiPassword();
+        break;
+
     case 'guru/jadwal':
     case 'guru/notifikasi':
         require_once BASE_PATH . '/app/controllers/DashboardController.php';
@@ -131,7 +144,6 @@ switch ($url) {
         (new AdminController())->siswa();
         break;
 
-    // ── CRUD siswa ─────────────────────────────────────────────────
     case 'admin/siswa/store':
         require_once BASE_PATH . '/app/controllers/AdminController.php';
         (new AdminController())->storeSiswa();
@@ -152,7 +164,6 @@ switch ($url) {
         (new AdminController())->guru();
         break;
 
-    // ── CRUD guru ──────────────────────────────────────────────────
     case 'admin/guru/store':
         require_once BASE_PATH . '/app/controllers/AdminController.php';
         (new AdminController())->storeGuru();
@@ -173,7 +184,6 @@ switch ($url) {
         (new AdminController())->kelas();
         break;
 
-    // ── CRUD kelas ─────────────────────────────────────────────────
     case 'admin/kelas/store':
         require_once BASE_PATH . '/app/controllers/AdminController.php';
         (new AdminController())->storeKelas();

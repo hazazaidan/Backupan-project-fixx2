@@ -4,25 +4,22 @@ class PengaturanController extends Controller
 {
     public function __construct()
     {
-        // Cek session login
         if (!isset($_SESSION['user'])) {
-            header('Location: ' . BASE_URL . '?url=auth/login');
+            header('Location: ' . BASE_URL . '?url=login');
             exit;
         }
     }
 
-    // GET - Tampilkan halaman pengaturan
     public function index()
     {
         $user = $_SESSION['user'];
         $this->view('guru/pengaturan', ['user' => $user]);
     }
 
-    // POST - Update profil (nama, email)
     public function updateProfil()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
@@ -32,89 +29,88 @@ class PengaturanController extends Controller
 
         if (empty($nama) || empty($email)) {
             $_SESSION['error'] = 'Nama dan email tidak boleh kosong.';
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
-        $db = Database::getInstance();
+        // Cek email duplikat via Supabase
+        $cek = Database::request("GET", "guru?email=eq." . urlencode($email) . "&id=neq.$id");
 
-        // Cek email duplikat (selain diri sendiri)
-        $cek = $db->query(
-            "SELECT id FROM guru WHERE email = ? AND id != ?",
-            [$email, $id]
-        )->fetch();
-
-        if ($cek) {
+        if (!empty($cek) && !isset($cek['error'])) {
             $_SESSION['error'] = 'Email sudah digunakan oleh akun lain.';
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
-        $db->query(
-            "UPDATE guru SET nama = ?, email = ? WHERE id = ?",
-            [$nama, $email, $id]
-        );
+        // Update ke Supabase
+        Database::request("PATCH", "guru?id=eq.$id", [
+            'nama'  => $nama,
+            'email' => $email,
+        ]);
 
         // Update session
         $_SESSION['user']['nama']  = $nama;
         $_SESSION['user']['email'] = $email;
 
         $_SESSION['success'] = 'Profil berhasil diperbarui.';
-        header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+        header('Location: ' . BASE_URL . '?url=pengaturan');
         exit;
     }
 
-    // POST - Ganti password
     public function gantiPassword()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
-        $id               = $_SESSION['user']['id'];
-        $password_lama    = $_POST['password_lama']    ?? '';
-        $password_baru    = $_POST['password_baru']    ?? '';
-        $konfirmasi_pass  = $_POST['konfirmasi_pass']  ?? '';
+        $id              = $_SESSION['user']['id'];
+        $password_lama   = $_POST['password_lama']   ?? '';
+        $password_baru   = $_POST['password_baru']   ?? '';
+        $konfirmasi_pass = $_POST['konfirmasi_pass']  ?? '';
 
         if (empty($password_lama) || empty($password_baru) || empty($konfirmasi_pass)) {
             $_SESSION['error'] = 'Semua field password harus diisi.';
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
         if ($password_baru !== $konfirmasi_pass) {
             $_SESSION['error'] = 'Konfirmasi password tidak cocok.';
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
         if (strlen($password_baru) < 6) {
             $_SESSION['error'] = 'Password baru minimal 6 karakter.';
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
-        $db   = Database::getInstance();
-        $guru = $db->query(
-            "SELECT password FROM guru WHERE id = ?",
-            [$id]
-        )->fetch();
+        // Ambil data guru dari Supabase
+        $guru = Database::request("GET", "guru?id=eq.$id");
 
-        if (!$guru || !password_verify($password_lama, $guru['password'])) {
+        if (empty($guru) || !isset($guru[0]['password'])) {
+            $_SESSION['error'] = 'Data akun tidak ditemukan.';
+            header('Location: ' . BASE_URL . '?url=pengaturan');
+            exit;
+        }
+
+        // Verifikasi password lama
+        if (!password_verify($password_lama, $guru[0]['password'])) {
             $_SESSION['error'] = 'Password lama tidak sesuai.';
-            header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+            header('Location: ' . BASE_URL . '?url=pengaturan');
             exit;
         }
 
+        // Update password baru
         $hash = password_hash($password_baru, PASSWORD_DEFAULT);
-        $db->query(
-            "UPDATE guru SET password = ? WHERE id = ?",
-            [$hash, $id]
-        );
+        Database::request("PATCH", "guru?id=eq.$id", [
+            'password' => $hash,
+        ]);
 
         $_SESSION['success'] = 'Password berhasil diperbarui.';
-        header('Location: ' . BASE_URL . '?url=guru/pengaturan');
+        header('Location: ' . BASE_URL . '?url=pengaturan');
         exit;
     }
 }
