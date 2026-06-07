@@ -9,7 +9,7 @@ class GuruController extends Controller {
             header('Location: ?url=auth/loginPage');
             exit;
         }
-        return $_SESSION['user']; // return data user langsung
+        return $_SESSION['user'];
     }
 
     // ─── Routes ──────────────────────────────────────────────────────────────
@@ -45,5 +45,38 @@ class GuruController extends Controller {
     public function pengaturan() {
         $user = $this->authCheck();
         $this->view('guru/pengaturan', compact('user'));
+    }
+
+    // ─── TAMBAHAN: Kelas & Mapel ──────────────────────────────────────────────
+    public function kelas() {
+        $user    = $this->authCheck();
+        $guruId  = $user['id'] ?? null;
+
+        $kelasModel = new Kelas();
+
+        // Ambil daftar kelas yang diajar guru ini (by wali_kelas)
+        $kelasList = $guruId ? $kelasModel->getByGuru($guruId) : [];
+
+        // Jika ada AJAX request untuk mapel
+        if (isset($_GET['action']) && $_GET['action'] === 'mapel') {
+            $namaKelas = $_GET['kelas'] ?? '';
+            $mapelList = $guruId
+                ? $kelasModel->getMapelByGuruKelas($guruId, $namaKelas)
+                : [];
+            header('Content-Type: application/json');
+            echo json_encode($mapelList);
+            exit;
+        }
+
+        // Ambil semua mapel untuk kelas pertama (default) jika ada
+        $mapelList = [];
+        if (!empty($kelasList) && $guruId) {
+            $mapelList = $kelasModel->getMapelByGuruKelas(
+                $guruId,
+                $kelasList[0]['nama'] ?? ''
+            );
+        }
+
+        $this->view('guru/kelas', compact('user', 'kelasList', 'mapelList'));
     }
 }

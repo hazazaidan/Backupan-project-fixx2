@@ -89,7 +89,6 @@ $inisial = strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explode
 
 <style>
 :root {
-    /* ── WARNA DISAMAKAN DENGAN SIDEBAR GURU ── */
     --sb: #0f1729;
     --sb2: #1a2540;
     --sb-active: #2563eb;
@@ -123,12 +122,14 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
     transition: transform 0.3s ease;
 }
 .admin-sidebar.collapsed { transform: translateX(-100%); }
+
 .sidebar-header {
     padding: 18px 20px 14px;
     border-bottom: 1px solid rgba(255,255,255,0.07);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
 }
 .sidebar-logo { display: flex; align-items: center; gap: 10px; }
 .logo-icon {
@@ -140,7 +141,8 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
 }
 .logo-title { display: block; font-size: 13px; font-weight: 700; color: white; line-height: 1.2; }
 .logo-sub { display: block; font-size: 10px; color: rgba(255,255,255,0.45); }
-.sidebar-close { display: none; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 16px; }
+.sidebar-close { display: none; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 16px; transition: color 0.15s; }
+.sidebar-close:hover { color: white; }
 
 .sidebar-user {
     margin: 14px 12px;
@@ -150,6 +152,7 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
 }
 .su-avatar {
     width: 38px; height: 38px;
@@ -158,12 +161,40 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 13px; color: white; flex-shrink: 0;
 }
-.su-name { display: block; font-size: 13px; font-weight: 600; color: white; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-.su-role { display: block; font-size: 10px; color: rgba(255,255,255,0.45); }
-.su-status { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-left: auto; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(34,197,94,0.3); }
+.su-info { flex: 1; min-width: 0; }
+.su-name { display: block; font-size: 13px; font-weight: 600; color: white; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.su-role { display: block; font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.su-status { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(34,197,94,0.3); }
 
-.sidebar-nav { padding: 8px 10px; flex: 1; overflow-y: auto; }
-.nav-group-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; color: rgba(255,255,255,0.3); text-transform: uppercase; padding: 10px 10px 5px; }
+.sidebar-nav {
+    padding: 8px 10px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.nav-group-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    padding: 10px 10px 5px;
+}
 .sn-item {
     display: flex;
     align-items: center;
@@ -174,14 +205,33 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
     font-size: 13.5px;
     font-weight: 500;
     text-decoration: none;
-    transition: all 0.18s;
+    transition: all 0.18s ease;
     margin-bottom: 2px;
+    cursor: pointer;
 }
-.sn-item i { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
-.sn-item:hover { background: var(--sb-hover); color: white; }
-.sn-item.active { background: var(--accent); color: white; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
-.sn-logout { color: rgba(239,68,68,0.7); margin-top: 4px; }
-.sn-logout:hover { background: rgba(239,68,68,0.12); color: #ef4444; }
+.sn-item i {
+    font-size: 15px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.sn-item:hover {
+    background: var(--sb-hover);
+    color: white;
+}
+.sn-item.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+}
+.sn-logout {
+    color: rgba(239,68,68,0.7);
+    margin-top: 4px;
+}
+.sn-logout:hover {
+    background: rgba(239,68,68,0.12);
+    color: #ef4444;
+}
 
 /* MAIN */
 .admin-main {
@@ -205,10 +255,10 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 .topbar-left { display: flex; align-items: center; gap: 14px; }
-.topbar-toggle { background: none; border: none; font-size: 18px; color: var(--text2); cursor: pointer; padding: 4px; border-radius: 6px; }
+.topbar-toggle { background: none; border: none; font-size: 18px; color: var(--text2); cursor: pointer; padding: 4px; border-radius: 6px; transition: background 0.15s; }
 .topbar-toggle:hover { background: var(--bg); }
 .topbar-title h2 { font-size: 16px; font-weight: 700; color: var(--text); }
-.topbar-title p  { font-size: 12px; color: var(--text2); }
+.topbar-title p { font-size: 12px; color: var(--text2); }
 .topbar-right { display: flex; align-items: center; gap: 12px; }
 .topbar-icon-btn {
     width: 36px; height: 36px;
@@ -311,9 +361,9 @@ table.admin-table tbody tr:hover td { background: #f8fafc; }
 .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 .badge-success { background: #dcfce7; color: #16a34a; }
 .badge-warning { background: #fef3c7; color: #d97706; }
-.badge-danger  { background: #fee2e2; color: #dc2626; }
-.badge-info    { background: #dbeafe; color: #2563eb; }
-.badge-purple  { background: #ede9fe; color: #7c3aed; }
+.badge-danger { background: #fee2e2; color: #dc2626; }
+.badge-info { background: #dbeafe; color: #2563eb; }
+.badge-purple { background: #ede9fe; color: #7c3aed; }
 
 /* BUTTONS */
 .btn-primary {
@@ -517,7 +567,7 @@ table.admin-table tbody tr:hover td { background: #f8fafc; }
     max-width: 320px;
 }
 .toast.success { border-left: 4px solid #22c55e; }
-.toast.error   { border-left: 4px solid #ef4444; }
+.toast.error { border-left: 4px solid #ef4444; }
 @keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
 @media (max-width: 1024px) {
