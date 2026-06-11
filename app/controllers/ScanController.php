@@ -43,17 +43,13 @@ class ScanController extends Controller {
         // Ambil qr_code dari POST
         $qrCode = trim($_POST['qr_code'] ?? '');
 
-        echo json_encode([
-    'debug_received' => $qrCode,
-    'debug_query'    => 'students?select=id,nama,kelas,nis&qr_image=eq.' . urlencode($qrCode) . '&limit=1'
-]);
-exit;
-
+        // Validasi: QR Code tidak boleh kosong
         if (empty($qrCode)) {
             echo json_encode(['success' => false, 'message' => 'QR Code kosong']);
             exit;
         }
 
+        // Set timezone
         date_default_timezone_set('Asia/Jakarta');
 
         // ── CARI SISWA ──
@@ -71,11 +67,11 @@ exit;
             );
         }
 
+        // Jika masih tidak ditemukan
         if (empty($siswaResult) || isset($siswaResult['error'])) {
             echo json_encode([
                 'success' => false,
-                'message' => 'QR tidak dikenali: ' . htmlspecialchars($qrCode),
-                'debug'   => 'Tidak ditemukan di qr_image maupun nis'
+                'message' => 'QR Code tidak dikenali. Silakan cek kembali atau hubungi administrator.'
             ]);
             exit;
         }
@@ -93,7 +89,7 @@ exit;
         if (!empty($absenResult) && !isset($absenResult['error'])) {
             echo json_encode([
                 'success' => false,
-                'message' => ($siswa['nama'] ?? 'Siswa') . ' sudah absen hari ini'
+                'message' => htmlspecialchars($siswa['nama'] ?? 'Siswa') . ' sudah absen hari ini'
             ]);
             exit;
         }
@@ -118,23 +114,24 @@ exit;
         if (isset($insertResult['error'])) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Gagal menyimpan absensi',
-                'debug'   => $insertResult['error']
+                'message' => 'Gagal menyimpan absensi. Silakan coba lagi.'
             ]);
             exit;
         }
 
         // ── RESPONSE SUKSES ──
-        $pesan = ($status === 'terlambat')
-            ? ($siswa['nama'] ?? '') . ' hadir — Terlambat (melewati 07:30)'
-            : ($siswa['nama'] ?? '') . ' berhasil absen Hadir';
+        if ($status === 'terlambat') {
+            $pesan = htmlspecialchars($siswa['nama'] ?? 'Siswa') . ' hadir — Terlambat (melewati 07:30)';
+        } else {
+            $pesan = htmlspecialchars($siswa['nama'] ?? 'Siswa') . ' berhasil absen Hadir';
+        }
 
         echo json_encode([
             'success' => true,
             'message' => $pesan,
             'siswa'   => [
-                'nama'       => $siswa['nama']  ?? '-',
-                'nama_kelas' => $namaKelas,
+                'nama'       => htmlspecialchars($siswa['nama'] ?? '-'),
+                'nama_kelas' => htmlspecialchars($namaKelas),
             ],
             'waktu'   => $waktuSekarang,
             'status'  => $status,
@@ -156,7 +153,9 @@ exit;
                     . $today . '&order=waktu_masuk.desc'
             );
 
-            if (empty($result) || isset($result['error'])) return [];
+            if (empty($result) || isset($result['error'])) {
+                return [];
+            }
 
             return array_map(function ($row) {
                 return [

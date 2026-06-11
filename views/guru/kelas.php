@@ -32,8 +32,6 @@ $mapelMapped = array_map(function($m) {
     ];
 }, $mapelList ?? []);
 
-// Tidak ada dummy data — data asli dari controller
-
 $totalSiswa  = array_sum(array_column($kelasMapped, 'jumlah_siswa'));
 $jadwalAktif = count(array_filter($mapelMapped, fn($m) => ($m['status'] ?? '') === 'berjalan'));
 ?>
@@ -49,12 +47,10 @@ $jadwalAktif = count(array_filter($mapelMapped, fn($m) => ($m['status'] ?? '') =
 <style>
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-    /* ── SIDEBAR: identik Dashboard ── */
     --sidebar-bg: #0f1729;
     --sidebar-hover: #1a2540;
     --sidebar-active: #2563eb;
     --accent: #2563eb;
-    /* ── KONTEN ── */
     --primary:#2563eb; --primary-dark:#1d4ed8; --primary-soft:#eff6ff; --primary-mid:#bfdbfe;
     --purple:#7c3aed; --purple-soft:#f5f3ff;
     --bg:#f0f4f8; --white:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
@@ -68,9 +64,6 @@ $jadwalAktif = count(array_filter($mapelMapped, fn($m) => ($m['status'] ?? '') =
 
 body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; font-size: 14px; }
 
-/* ════════════════════════════════════════
-   SIDEBAR — identik 100% dengan Dashboard
-   ════════════════════════════════════════ */
 .sidebar {
     background: var(--sidebar-bg);
     width: 260px;
@@ -141,7 +134,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     font-weight: 500;
     text-decoration: none;
     transition: all 0.2s;
-    position: relative;
 }
 .nav-item:hover { background: var(--sidebar-hover); color: white; }
 .nav-item.active { background: var(--accent); color: white; }
@@ -151,9 +143,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     padding-bottom: 8px;
     margin-top: auto;
 }
-/* ════════════════════════════════════════ */
 
-/* ── MAIN ── */
 .main {
     margin-left: 260px;
     flex: 1;
@@ -185,7 +175,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     background: #fff; color: var(--muted);
     cursor: pointer; display: flex;
     align-items: center; justify-content: center;
-    transition: .2s; position: relative;
+    transition: .2s;
 }
 .ibtn:hover { background: var(--primary-soft); border-color: var(--primary-mid); color: var(--primary); }
 .notif-dot {
@@ -213,7 +203,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 
 .content { padding: 24px 28px; flex: 1; background: var(--bg); }
 
-/* Stats */
 .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
 .stat-card {
     background: #fff; border: 1px solid var(--border);
@@ -234,7 +223,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 .stat-trend.up   { background: var(--green-soft); color: var(--green); }
 .stat-trend.info { background: var(--primary-soft); color: var(--primary); }
 
-/* Stepper */
 .stepper {
     background: #fff; border: 1px solid var(--border);
     border-radius: var(--radius); padding: 18px 24px; margin-bottom: 22px;
@@ -257,13 +245,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 .step-line.done   { background: var(--green); }
 .step-line.active { background: linear-gradient(90deg,var(--primary) 60%,var(--border)); }
 
-/* Section header */
 .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .sec-title  { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; letter-spacing: -.2px; }
 .sec-title i { color: var(--primary); font-size: 13px; }
 .sec-count  { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--bg); padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); }
 
-/* Toolbar */
 .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
 .search-wrap i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 12px; pointer-events: none; }
@@ -283,7 +269,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 }
 .pill:hover, .pill.active { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
 
-/* Kelas grid */
 .kelas-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 14px; margin-bottom: 28px; }
 .kelas-card {
     background: #fff; border: 2px solid var(--border);
@@ -306,17 +291,16 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 .jurusan-TKJ  { background: #e0f2fe; color: #0369a1; }
 .jurusan-UMUM { background: #f1f5f9; color: #475569; }
 
-/* Mapel grid */
 .mapel-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); gap: 14px; margin-bottom: 28px; }
 .mapel-card {
     background: #fff; border: 2px solid var(--border);
     border-radius: var(--radius); padding: 16px;
     cursor: pointer; transition: all .22s;
-    display: flex; gap: 13px; align-items: flex-start; position: relative;
+    display: flex; gap: 13px; align-items: flex-start;
 }
 .mapel-card:hover  { border-color: #93c5fd; box-shadow: 0 6px 22px rgba(37,99,235,.1); transform: translateY(-2px); }
 .mapel-card.selected { border-color: var(--primary); background: var(--primary-soft); box-shadow: 0 6px 22px rgba(37,99,235,.15); }
-.mapel-card.disabled { cursor: not-allowed; }
+.mapel-card.disabled { cursor: not-allowed; opacity: 0.5; }
 .mapel-card.disabled:hover { transform: none !important; box-shadow: none !important; border-color: var(--border) !important; }
 .mapel-ico  { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
 .mapel-info { flex: 1; min-width: 0; }
@@ -333,13 +317,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 .radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; display: none; }
 .mapel-card.selected .radio-dot { display: block; }
 
-/* Empty */
 .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
 .empty-state i      { font-size: 42px; display: block; margin-bottom: 14px; opacity: .2; }
 .empty-state strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
 .empty-state p      { font-size: 12px; opacity: .7; }
 
-/* Submit bar */
 .submit-bar {
     position: sticky; bottom: 0;
     background: rgba(255,255,255,.92);
@@ -367,6 +349,9 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
 .btn-mulai:hover  { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(37,99,235,.4); }
 .btn-mulai.disabled { opacity: .35; cursor: not-allowed; transform: none !important; pointer-events: none; box-shadow: none; }
 
+.loading-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(37,99,235,.3); border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 .hidden { display: none !important; }
 
 @media(max-width:1180px){ .stats { grid-template-columns: repeat(2,1fr); } }
@@ -377,14 +362,14 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     .stats { grid-template-columns: repeat(2,1fr); gap: 10px; }
     .kelas-grid { grid-template-columns: repeat(2,1fr); }
     .mapel-grid { grid-template-columns: 1fr; }
+    .submit-bar { padding: 10px 16px; gap: 10px; flex-direction: column; }
+    .sub-sum { font-size: 11px; }
+    .btn-mulai { width: 100%; justify-content: center; }
 }
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════
-     SIDEBAR — identik 100% dengan Dashboard
-     ════════════════════════════════════════ -->
 <aside class="sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon"><i class="fa fa-qrcode text-white text-lg"></i></div>
@@ -394,16 +379,16 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
         </div>
     </div>
     <div class="user-card">
-        <div class="user-avatar"><?= $userInisial ?></div>
+        <div class="user-avatar"><?= htmlspecialchars($userInisial) ?></div>
         <div>
             <p style="color:white;font-weight:600;font-size:13px;line-height:1.2;"><?= htmlspecialchars($userNama) ?></p>
             <p style="color:rgba(255,255,255,0.45);font-size:11px;">Guru – <?= htmlspecialchars($userKelas) ?></p>
         </div>
     </div>
     <p class="nav-section-label">Menu Utama</p>
-    <nav>
+    <nav role="navigation" aria-label="Main navigation">
         <a href="?url=guru/dashboard"  class="nav-item"><i class="fa fa-home nav-icon"></i> Dashboard</a>
-        <a href="?url=guru/kelas"      class="nav-item active"><i class="fa fa-door-open nav-icon"></i> Kelas</a>
+        <a href="?url=guru/kelas"      class="nav-item active" aria-current="page"><i class="fa fa-door-open nav-icon"></i> Kelas</a>
         <a href="?url=guru/riwayat"    class="nav-item"><i class="fa fa-clock-rotate-left nav-icon"></i> Riwayat Absensi</a>
         <a href="?url=guru/rekap"      class="nav-item"><i class="fa fa-layer-group nav-icon"></i> Rekap Kelas</a>
         <a href="?url=guru/monitoring" class="nav-item"><i class="fa fa-chart-line nav-icon"></i> Monitoring</a>
@@ -415,7 +400,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     </div>
 </aside>
 
-<!-- MAIN -->
 <div class="main">
 <header class="topbar">
     <div class="topbar-left">
@@ -426,14 +410,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     </div>
     <div class="topbar-r">
         <div class="date-badge"><i class="fa fa-calendar-day"></i><span id="tglHariIni"></span></div>
-        <button class="ibtn"><i class="fa fa-bell"></i><span class="notif-dot"></span></button>
-        <div class="tav" title="<?= htmlspecialchars($userNama) ?>"><?= $userInisial ?></div>
+        <button class="ibtn" aria-label="Notifikasi"><i class="fa fa-bell"></i><span class="notif-dot"></span></button>
+        <div class="tav" title="<?= htmlspecialchars($userNama) ?>" role="img" aria-label="User avatar"><?= htmlspecialchars($userInisial) ?></div>
     </div>
 </header>
 
 <div class="content">
 
-    <!-- STATS -->
     <div class="stats">
         <div class="stat-card">
             <div class="stat-ico blue"><i class="fa fa-school"></i></div>
@@ -469,8 +452,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
         </div>
     </div>
 
-    <!-- STEPPER -->
-    <div class="stepper">
+    <div class="stepper" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3" aria-label="Selection progress">
         <div class="step">
             <div class="step-num active" id="step1num">1</div>
             <div class="step-info">
@@ -496,7 +478,6 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
         </div>
     </div>
 
-    <!-- KELAS -->
     <div class="sec-header">
         <div class="sec-title"><i class="fa fa-chalkboard-user"></i> Kelas yang Anda Ajar</div>
         <span class="sec-count" id="kelasCount"><?= count($kelasMapped) ?> kelas</span>
@@ -504,47 +485,45 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); colo
     <div class="toolbar">
         <div class="search-wrap">
             <i class="fa fa-magnifying-glass"></i>
-            <input type="text" placeholder="Cari kelas atau wali kelas..." id="searchKelas" oninput="filterKelas()">
+            <input type="text" placeholder="Cari kelas atau wali kelas..." id="searchKelas" aria-label="Search classes" oninput="filterKelas()">
         </div>
-        <div class="pills">
+        <div class="pills" role="group" aria-label="Class filters">
             <button class="pill active" onclick="setFilter('all',this)">Semua</button>
-            <button class="pill" onclick="setFilter('X ',this)">Kelas X</button>
+            <button class="pill" onclick="setFilter('X',this)">Kelas X</button>
             <button class="pill" onclick="setFilter('XI',this)">Kelas XI</button>
             <button class="pill" onclick="setFilter('XII',this)">Kelas XII</button>
             <button class="pill" onclick="setFilter('RPL',this)">RPL</button>
             <button class="pill" onclick="setFilter('TKJ',this)">TKJ</button>
         </div>
     </div>
-    <div class="kelas-grid" id="kelasGrid"></div>
+    <div class="kelas-grid" id="kelasGrid" role="region" aria-label="Available classes"></div>
     <div id="emptyKelas" class="empty-state hidden">
         <i class="fa fa-magnifying-glass-minus"></i>
         <strong>Tidak ditemukan</strong>
         <p>Tidak ada kelas yang cocok dengan pencarian Anda.</p>
     </div>
 
-    <!-- MAPEL -->
     <div id="mapelSection" class="hidden">
         <div class="sec-header">
             <div class="sec-title"><i class="fa fa-book-bookmark"></i> Mata Pelajaran</div>
             <span class="sec-count" id="mapelCount">–</span>
         </div>
-        <div class="mapel-grid" id="mapelGrid"></div>
+        <div class="mapel-grid" id="mapelGrid" role="region" aria-label="Available subjects"></div>
     </div>
 
-</div><!-- /content -->
+</div>
 
-<!-- SUBMIT BAR -->
 <div class="submit-bar">
     <div class="sub-info">
         <div class="sub-icon" id="subIcon"><i class="fa fa-arrow-right"></i></div>
         <div class="sub-sum" id="subSum">Pilih kelas dan mata pelajaran untuk melanjutkan</div>
     </div>
-    <a href="#" class="btn-mulai disabled" id="btnMulai">
+    <a href="#" class="btn-mulai disabled" id="btnMulai" aria-disabled="true">
         <i class="fa fa-play"></i> Mulai Absensi
     </a>
 </div>
 
-</div><!-- /main -->
+</div>
 
 <script>
 const kelasList = <?= json_encode(array_values($kelasMapped)) ?>;
@@ -564,6 +543,7 @@ const ICON = [
 let selectedKelas = null, selectedNamaKelas = null, selectedJadwalKelas = null;
 let selectedMapel = null, selectedNamaMapel = null;
 let activeFilter = 'all', currentMapels = [];
+let mapelLoading = false;
 
 const NAMA_HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const HARI_INI  = NAMA_HARI[new Date().getDay()];
@@ -577,32 +557,37 @@ const HARI_INI  = NAMA_HARI[new Date().getDay()];
 })();
 
 function escHtml(str) {
-    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(str||'').replace(/[&<>"']/g, m => map[m]);
 }
 
 function renderKelas(list) {
     const grid  = document.getElementById('kelasGrid');
     const empty = document.getElementById('emptyKelas');
     document.getElementById('kelasCount').textContent = list.length + ' kelas';
-    if (!list.length) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    if (!list.length) { 
+        grid.innerHTML = ''; 
+        empty.classList.remove('hidden'); 
+        return; 
+    }
     empty.classList.add('hidden');
     grid.innerHTML = list.map((k, i) => {
-        const nama    = k.nama || '??';
+        const nama    = escHtml(k.nama || '??');
         const siswa   = k.jumlah_siswa ?? 0;
-        const wali    = k.wali_kelas   || '-';
-        const jur     = k.jurusan      || 'UMUM';
-        const inisial = nama.replace(/\s+/g,' ').split(' ').slice(0,2).map(s=>s[0]||'').join('').toUpperCase();
+        const wali    = escHtml(k.wali_kelas || '-');
+        const jur     = k.jurusan || 'UMUM';
+        const inisial = k.nama ? k.nama.replace(/\s+/g,' ').split(' ').slice(0,2).map(s=>s[0]||'').join('').toUpperCase() : '??';
         const [c1,c2] = WARNA[i % WARNA.length];
         const sel     = selectedKelas === String(k.id) ? ' selected' : '';
         const kIdx    = kelasList.findIndex(x => String(x.id) === String(k.id));
         return `
-            <div class="kelas-card${sel}" id="kcard-${k.id}" data-idx="${kIdx}" style="--c1:${c1};--c2:${c2}">
+            <div class="kelas-card${sel}" id="kcard-${escHtml(String(k.id))}" data-idx="${kIdx}" style="--c1:${c1};--c2:${c2}" role="button" tabindex="0" aria-label="Kelas ${nama}">
                 <span class="kelas-badge"><i class="fa fa-check" style="font-size:8px"></i> Aktif</span>
-                <div class="kelas-ico" style="background:linear-gradient(135deg,${c1},${c2})">${inisial}</div>
-                <div class="kelas-name">${escHtml(nama)}</div>
+                <div class="kelas-ico" style="background:linear-gradient(135deg,${c1},${c2})">${escHtml(inisial)}</div>
+                <div class="kelas-name">${nama}</div>
                 <div class="kelas-meta"><i class="fa fa-users"></i> ${siswa} Siswa</div>
-                <div class="kelas-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;padding-left:17px;margin-top:-4px;">${escHtml(wali)}</div>
-                <span class="kelas-jurusan jurusan-${jur}">${jur}</span>
+                <div class="kelas-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;padding-left:17px;margin-top:-4px;" title="${wali}">${wali}</div>
+                <span class="kelas-jurusan jurusan-${jur}">${escHtml(jur)}</span>
             </div>`;
     }).join('');
 }
@@ -617,10 +602,10 @@ function renderMapel(list) {
         return;
     }
     grid.innerHTML = list.map((m, i) => {
-        const nama    = m.nama || '-';
-        const jam     = (m.jam_mulai && m.jam_selesai) ? `${m.jam_mulai} – ${m.jam_selesai}` : '-';
-        const ruangan = m.ruangan || '-';
-        const hari    = m.hari || '';
+        const nama    = escHtml(m.nama || '-');
+        const jam     = (m.jam_mulai && m.jam_selesai) ? `${escHtml(m.jam_mulai)} – ${escHtml(m.jam_selesai)}` : '-';
+        const ruangan = escHtml(m.ruangan || '-');
+        const hari    = escHtml(m.hari || '');
         const [c1]    = WARNA[i % WARNA.length];
         const icon    = ICON[i % ICON.length];
         const isHariIni  = hari.toLowerCase() === HARI_INI.toLowerCase();
@@ -637,36 +622,53 @@ function renderMapel(list) {
             statusHtml = `<span class="mapel-status available"><i class="fa fa-circle-check"></i> Tersedia</span>`;
         }
         return `
-            <div class="mapel-card${sel}${disabledCls}" id="mcard-${m.id}" data-idx="${i}" data-hari-ini="${isHariIni ? '1' : '0'}">
+            <div class="mapel-card${sel}${disabledCls}" id="mcard-${escHtml(String(m.id))}" data-id="${escHtml(String(m.id))}" data-hari-ini="${isHariIni ? '1' : '0'}" role="button" tabindex="${isHariIni ? '0' : '-1'}" aria-label="Mapel ${nama}" ${!isHariIni ? 'aria-disabled="true"' : ''}>
                 <div class="radio-wrap"><div class="radio-circle"><div class="radio-dot"></div></div></div>
                 <div class="mapel-ico" style="background:${c1}18"><i class="fa ${icon}" style="color:${c1}"></i></div>
                 <div class="mapel-info">
-                    <div class="mapel-name">${escHtml(nama)}</div>
-                    ${hari ? `<div class="mapel-detail"><i class="fa fa-calendar-week"></i> ${escHtml(hari)}</div>` : ''}
-                    <div class="mapel-detail"><i class="fa fa-clock"></i> ${escHtml(jam)}</div>
-                    <div class="mapel-detail"><i class="fa fa-building-columns"></i> ${escHtml(ruangan)}</div>
+                    <div class="mapel-name">${nama}</div>
+                    ${hari ? `<div class="mapel-detail"><i class="fa fa-calendar-week"></i> ${hari}</div>` : ''}
+                    <div class="mapel-detail"><i class="fa fa-clock"></i> ${jam}</div>
+                    <div class="mapel-detail"><i class="fa fa-building-columns"></i> ${ruangan}</div>
                     ${statusHtml}
                 </div>
             </div>`;
     }).join('');
+    mapelLoading = false;
 }
 
 function pilihKelas(id, nama, jadwalId) {
-    selectedKelas = id || nama; selectedNamaKelas = nama; selectedJadwalKelas = String(jadwalId || id);
-    selectedMapel = null; selectedNamaMapel = null;
+    if (!id) console.warn('[pilihKelas] id kosong, fallback ke nama:', nama);
+
+    selectedKelas      = id || nama;
+    selectedNamaKelas  = nama;
+    selectedJadwalKelas = String(jadwalId || id);
+    selectedMapel      = null;
+    selectedNamaMapel  = null;
+
     renderKelas(getFilteredKelas());
     document.getElementById('mapelSection').classList.remove('hidden');
+
     document.getElementById('step1sub').textContent = nama;
     document.getElementById('step1num').className   = 'step-num done';
     document.getElementById('step1num').innerHTML   = '<i class="fa fa-check" style="font-size:11px"></i>';
     document.getElementById('line1').className      = 'step-line done';
+
     document.getElementById('step2num').className   = 'step-num active';
     document.getElementById('step2sub').textContent = 'Pilih sekarang';
+
+    document.getElementById('step3num').className = 'step-num idle';
+    document.getElementById('step3num').innerHTML = '<i class="fa fa-flag" style="font-size:11px"></i>';
+    document.getElementById('line2').className    = 'step-line';
+
     updateSubmit();
+    mapelLoading = true;
+
     fetch(`?url=guru/kelas&action=mapel&kelas=${encodeURIComponent(nama)}`)
         .then(r => r.json())
         .then(data => {
-            const normalized = (Array.isArray(data) ? data : []).map(m => ({
+            if (!Array.isArray(data)) throw new Error('Invalid response');
+            const normalized = data.map(m => ({
                 id: m.id ?? '', nama: m.mata_pelajaran ?? m.nama_mapel ?? m.nama ?? '',
                 jam_mulai: m.jam_mulai ?? '', jam_selesai: m.jam_selesai ?? '',
                 hari: m.hari ?? '', ruangan: m.ruangan ?? '-',
@@ -674,12 +676,20 @@ function pilihKelas(id, nama, jadwalId) {
             }));
             renderMapel(normalized.length ? normalized : mapelList);
         })
-        .catch(() => renderMapel(mapelList));
+        .catch(err => {
+            console.error('Fetch error:', err);
+            currentMapels = [];
+            document.getElementById('mapelGrid').innerHTML =
+                '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i><strong>Gagal memuat mapel</strong><p>Tidak dapat mengambil data. Coba pilih kelas kembali.</p></div>';
+            mapelLoading = false;
+        });
+
     setTimeout(() => document.getElementById('mapelSection').scrollIntoView({behavior:'smooth',block:'start'}), 100);
 }
 
 function pilihMapel(id, nama) {
-    selectedMapel = id || nama; selectedNamaMapel = nama;
+    selectedMapel = id || nama;
+    selectedNamaMapel = nama;
     renderMapel(currentMapels);
     document.getElementById('step2sub').textContent = nama;
     document.getElementById('step2num').className   = 'step-num done';
@@ -696,14 +706,20 @@ function updateSubmit() {
     const icon = document.getElementById('subIcon');
     if (selectedKelas && selectedMapel) {
         const url = `?url=guru/absensi&kelas_id=${encodeURIComponent(selectedKelas)}&jadwal_id=${encodeURIComponent(selectedMapel)}&kelas=${encodeURIComponent(selectedNamaKelas)}&mapel=${encodeURIComponent(selectedNamaMapel)}`;
-        btn.classList.remove('disabled'); btn.href = url;
+        btn.classList.remove('disabled'); 
+        btn.href = url;
+        btn.setAttribute('aria-disabled', 'false');
         sum.innerHTML = `<strong>${escHtml(selectedNamaKelas)}</strong> &middot; <strong>${escHtml(selectedNamaMapel)}</strong>`;
         icon.innerHTML = '<i class="fa fa-play"></i>';
-        icon.style.background = '#dcfce7'; icon.style.color = '#16a34a';
+        icon.style.background = '#dcfce7'; 
+        icon.style.color = '#16a34a';
     } else {
-        btn.classList.add('disabled'); btn.href = '#';
+        btn.classList.add('disabled'); 
+        btn.href = '#';
+        btn.setAttribute('aria-disabled', 'true');
         icon.innerHTML = '<i class="fa fa-arrow-right"></i>';
-        icon.style.background = '#eff6ff'; icon.style.color = '#2563eb';
+        icon.style.background = '#eff6ff'; 
+        icon.style.color = '#2563eb';
         sum.innerHTML = selectedKelas
             ? 'Pilih <strong>mata pelajaran</strong> untuk melanjutkan'
             : 'Pilih <strong>kelas</strong> dan <strong>mata pelajaran</strong> untuk melanjutkan';
@@ -713,13 +729,15 @@ function updateSubmit() {
 function getFilteredKelas() {
     const q = (document.getElementById('searchKelas').value || '').toLowerCase().trim();
     return kelasList.filter(k => {
-        const nama   = (k.nama || '').toUpperCase();
-        const matchF = activeFilter === 'all' || nama.includes(activeFilter.toUpperCase());
+        const nama = (k.nama || '').toUpperCase();
+        const matchF = activeFilter === 'all' || nama.startsWith(activeFilter.toUpperCase());
         const matchS = !q || (k.nama||'').toLowerCase().includes(q) || (k.wali_kelas||'').toLowerCase().includes(q);
         return matchF && matchS;
     });
 }
+
 function filterKelas() { renderKelas(getFilteredKelas()); }
+
 function setFilter(val, el) {
     activeFilter = val;
     document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
@@ -727,19 +745,46 @@ function setFilter(val, el) {
     filterKelas();
 }
 
-document.getElementById('kelasGrid').addEventListener('click', function(e) {
+const kelasGrid = document.getElementById('kelasGrid');
+kelasGrid.addEventListener('click', function(e) {
     const card = e.target.closest('[data-idx]');
     if (!card) return;
     const k = kelasList[parseInt(card.dataset.idx)];
     if (!k) return;
     pilihKelas(String(k.id), k.nama || '', String(k.jadwal_id || k.id));
 });
-document.getElementById('mapelGrid').addEventListener('click', function(e) {
-    const card = e.target.closest('[data-idx]');
+
+kelasGrid.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const card = e.target.closest('[data-idx]');
+        if (!card) return;
+        const k = kelasList[parseInt(card.dataset.idx)];
+        if (!k) return;
+        pilihKelas(String(k.id), k.nama || '', String(k.jadwal_id || k.id));
+    }
+});
+
+const mapelGrid = document.getElementById('mapelGrid');
+mapelGrid.addEventListener('click', function(e) {
+    const card = e.target.closest('[data-id]');
     if (!card || card.dataset.hariIni === '0') return;
-    const m = currentMapels[parseInt(card.dataset.idx)];
+    const targetId = card.dataset.id;
+    const m = currentMapels.find(x => String(x.id) === targetId);
     if (!m) return;
     pilihMapel(String(m.id), m.nama || '');
+});
+
+mapelGrid.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const card = e.target.closest('[data-id]');
+        if (!card || card.dataset.hariIni === '0') return;
+        const targetId = card.dataset.id;
+        const m = currentMapels.find(x => String(x.id) === targetId);
+        if (!m) return;
+        pilihMapel(String(m.id), m.nama || '');
+    }
 });
 
 renderKelas(kelasList);
