@@ -237,7 +237,6 @@ $bulanIndo = ['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'Mei','06'=>
             <div class="topbar-right">
                 <div class="topbar-icon-btn">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">3</span>
                 </div>
                 <div class="topbar-avatar">
                     <?php

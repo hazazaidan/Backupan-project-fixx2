@@ -583,7 +583,6 @@ class AdminController
         ]);
     }
 
-    // [DIUBAH] Tambah strtoupper() pada tingkat
     public function storeKelas(): void
     {
         $this->requireAuth();
@@ -591,7 +590,7 @@ class AdminController
 
         $body      = json_decode(file_get_contents('php://input'), true) ?? [];
         $namaKelas = trim($body['nama_kelas']   ?? '');
-        $tingkat   = strtoupper(trim($body['tingkat']      ?? '')); // [DIUBAH]
+        $tingkat   = strtoupper(trim($body['tingkat']      ?? ''));
         $waliKelas = trim($body['wali_kelas']   ?? '');
         $tahun     = trim($body['tahun_ajaran'] ?? date('Y') . '/' . (date('Y') + 1));
         $kapasitas = (int) ($body['kapasitas']  ?? 0);
@@ -627,11 +626,16 @@ class AdminController
             exit;
         }
 
+        if (!empty($waliKelas)) {
+            Database::request('PATCH', 'guru?nama=eq.' . urlencode($waliKelas), [
+                'wali_kelas' => $namaKelas
+            ]);
+        }
+
         echo json_encode(['success' => true, 'message' => 'Kelas ' . $namaKelas . ' berhasil ditambahkan']);
         exit;
     }
 
-    // [DIUBAH] Tambah strtoupper() pada tingkat
     public function updateKelas(): void
     {
         $this->requireAuth();
@@ -640,7 +644,7 @@ class AdminController
         $body      = json_decode(file_get_contents('php://input'), true) ?? [];
         $id        = trim($body['id']           ?? '');
         $namaKelas = trim($body['nama_kelas']   ?? '');
-        $tingkat   = strtoupper(trim($body['tingkat']      ?? '')); // [DIUBAH]
+        $tingkat   = strtoupper(trim($body['tingkat']      ?? ''));
         $waliKelas = trim($body['wali_kelas']   ?? '');
         $tahun     = trim($body['tahun_ajaran'] ?? '');
         $kapasitas = (int) ($body['kapasitas']  ?? 0);
@@ -650,9 +654,12 @@ class AdminController
             exit;
         }
 
+        $kelasLama = Database::request('GET', 'kelas?id=eq.' . urlencode($id) . '&select=nama_kelas,wali_kelas&limit=1');
+        $waliLama  = $kelasLama[0]['wali_kelas'] ?? null;
+
         $payload = [
             'nama_kelas'   => $namaKelas,
-            'tingkat'      => !empty($tingkat) ? $tingkat : null, // [DIUBAH]
+            'tingkat'      => !empty($tingkat) ? $tingkat : null,
             'wali_kelas'   => !empty($waliKelas) ? $waliKelas : null,
             'tahun_ajaran' => $tahun ?: null,
         ];
@@ -663,6 +670,18 @@ class AdminController
         if (!$this->isSuccess($update)) {
             echo json_encode(['success' => false, 'message' => 'Gagal mengupdate data kelas']);
             exit;
+        }
+
+        if (!empty($waliLama) && $waliLama !== $waliKelas) {
+            Database::request('PATCH', 'guru?nama=eq.' . urlencode($waliLama), [
+                'wali_kelas' => null
+            ]);
+        }
+        // 2. Set wali_kelas baru ke guru yang dipilih
+        if (!empty($waliKelas)) {
+            Database::request('PATCH', 'guru?nama=eq.' . urlencode($waliKelas), [
+                'wali_kelas' => $namaKelas
+            ]);
         }
 
         echo json_encode(['success' => true, 'message' => 'Kelas ' . $namaKelas . ' berhasil diperbarui']);
@@ -680,6 +699,14 @@ class AdminController
         if (!$id) {
             echo json_encode(['success' => false, 'message' => 'ID tidak valid']);
             exit;
+        }
+
+        $kelasData = Database::request('GET', 'kelas?id=eq.' . urlencode($id) . '&select=wali_kelas&limit=1');
+        $waliLama  = $kelasData[0]['wali_kelas'] ?? null;
+        if (!empty($waliLama)) {
+            Database::request('PATCH', 'guru?nama=eq.' . urlencode($waliLama), [
+                'wali_kelas' => null
+            ]);
         }
 
         $delete = Database::request('DELETE', 'kelas?id=eq.' . urlencode($id));

@@ -195,7 +195,6 @@ $warnaList = ['#6366f1','#0ea5e9','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef44
             <div class="flex items-center gap-5">
                 <div class="relative cursor-pointer">
                     <i class="fa fa-bell text-gray-400 text-lg"></i>
-                    <span class="notif-dot"></span>
                 </div>
                 <i class="fa fa-comment-dots text-gray-400 text-lg cursor-pointer"></i>
                 <div class="flex items-center gap-3 pl-4" style="border-left:1px solid #e2e8f0;">

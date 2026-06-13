@@ -587,7 +587,6 @@ function renderKelas(list) {
                 <div class="kelas-name">${nama}</div>
                 <div class="kelas-meta"><i class="fa fa-users"></i> ${siswa} Siswa</div>
                 <div class="kelas-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;padding-left:17px;margin-top:-4px;" title="${wali}">${wali}</div>
-                <span class="kelas-jurusan jurusan-${jur}">${escHtml(jur)}</span>
             </div>`;
     }).join('');
 }

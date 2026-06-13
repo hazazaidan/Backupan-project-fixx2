@@ -309,7 +309,6 @@ $aktivitas = $aktivitas ?? [];
                 </button>
                 <div class="topbar-icon-btn">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">3</span>
                 </div>
                 <div class="topbar-avatar" title="<?= htmlspecialchars($_SESSION['user']['nama'] ?? 'Admin') ?>">
                     <?php

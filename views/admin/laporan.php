@@ -196,7 +196,6 @@ $warnaAva = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef444
                 </div>
                 <div class="topbar-icon-btn">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">3</span>
                 </div>
                 <div class="topbar-avatar">AD</div>
             </div>

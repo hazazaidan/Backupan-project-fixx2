@@ -56,7 +56,8 @@ $warnaList = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef44
     .filter-select{padding:8px 12px;border:1px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);outline:none;background:#fff;cursor:pointer;}
     .kelas-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.05);display:flex;align-items:center;gap:14px;transition:transform .2s,box-shadow .2s;border:2px solid transparent;}
     .kelas-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(79,70,229,0.12);border-color:rgba(79,70,229,0.15);}
-    .kelas-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:white;flex-shrink:0;}
+    /* FIX: font-size lebih kecil + letter-spacing agar X/XI/XII konsisten */
+    .kelas-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white;flex-shrink:0;letter-spacing:-0.5px;}
     .kelas-nama{font-size:15px;font-weight:700;color:var(--text);}
     .kelas-wali{font-size:11.5px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
     .kelas-siswa{font-size:11px;font-weight:600;background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:20px;margin-top:4px;display:inline-block;}
@@ -130,7 +131,6 @@ $warnaList = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef44
             <div class="topbar-right">
                 <div class="topbar-icon-btn">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">3</span>
                 </div>
                 <div class="topbar-avatar">
                     <?php
@@ -204,14 +204,16 @@ $warnaList = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef44
                 <div id="viewGrid" style="padding:20px;">
                     <div class="grid-kelas" id="gridContainer">
                         <?php foreach ($kelasList as $i => $k):
-                            $warna   = $warnaList[$i % count($warnaList)];
-                            $tingkat = explode(' ', $k['nama_kelas'])[0];
-                            $kId     = $k['id'] ?? $i;
-                            $namaK   = htmlspecialchars($k['nama_kelas']);
-                            $waliK   = htmlspecialchars($k['wali_kelas'] ?? '-');
-                            $tahunK  = htmlspecialchars($k['tahun_ajaran'] ?? date('Y').'/'.(date('Y')+1));
-                            $statusK = $k['status'];
-                            $kapK    = $k['kapasitas'] ?? 35;
+                            $warna    = $warnaList[$i % count($warnaList)];
+                            // FIX: validasi tingkat hanya tampilkan X/XI/XII
+                            $tingkatRaw = strtoupper(explode(' ', $k['nama_kelas'])[0]);
+                            $tingkat    = in_array($tingkatRaw, ['X','XI','XII']) ? $tingkatRaw : '?';
+                            $kId      = $k['id'] ?? $i;
+                            $namaK    = htmlspecialchars($k['nama_kelas']);
+                            $waliK    = htmlspecialchars($k['wali_kelas'] ?? '-');
+                            $tahunK   = htmlspecialchars($k['tahun_ajaran'] ?? date('Y').'/'.(date('Y')+1));
+                            $statusK  = $k['status'];
+                            $kapK     = $k['kapasitas'] ?? 35;
                         ?>
                         <div class="kelas-card"
                              data-nama="<?= strtolower($k['nama_kelas']) ?>"
@@ -253,13 +255,15 @@ $warnaList = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef44
                         </thead>
                         <tbody>
                         <?php foreach ($kelasList as $i => $k):
-                            $warna   = $warnaList[$i % count($warnaList)];
-                            $tingkat = explode(' ', $k['nama_kelas'])[0];
-                            $kId     = $k['id'] ?? $i;
-                            $namaK   = htmlspecialchars($k['nama_kelas']);
-                            $waliK   = htmlspecialchars($k['wali_kelas'] ?? '-');
-                            $tahunK  = htmlspecialchars($k['tahun_ajaran'] ?? date('Y').'/'.(date('Y')+1));
-                            $kapK    = $k['kapasitas'] ?? 35;
+                            $warna    = $warnaList[$i % count($warnaList)];
+                            // FIX: validasi tingkat hanya tampilkan X/XI/XII
+                            $tingkatRaw = strtoupper(explode(' ', $k['nama_kelas'])[0]);
+                            $tingkat    = in_array($tingkatRaw, ['X','XI','XII']) ? $tingkatRaw : '?';
+                            $kId      = $k['id'] ?? $i;
+                            $namaK    = htmlspecialchars($k['nama_kelas']);
+                            $waliK    = htmlspecialchars($k['wali_kelas'] ?? '-');
+                            $tahunK   = htmlspecialchars($k['tahun_ajaran'] ?? date('Y').'/'.(date('Y')+1));
+                            $kapK     = $k['kapasitas'] ?? 35;
                         ?>
                             <tr class="kelas-row"
                                 data-nama="<?= strtolower($k['nama_kelas']) ?>"
@@ -269,7 +273,7 @@ $warnaList = ['#4f46e5','#7c3aed','#0ea5e9','#10b981','#f59e0b','#ec4899','#ef44
                                 <td><?= $i+1 ?></td>
                                 <td>
                                     <div style="display:flex;align-items:center;gap:10px;">
-                                        <div style="width:34px;height:34px;border-radius:9px;background:<?= $warna ?>;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;flex-shrink:0;"><?= $tingkat ?></div>
+                                        <div style="width:34px;height:34px;border-radius:9px;background:<?= $warna ?>;display:flex;align-items:center;justify-content:font-size:11px;font-weight:800;color:white;flex-shrink:0;align-items:center;justify-content:center;font-size:11px;font-weight:800;letter-spacing:-0.5px;"><?= $tingkat ?></div>
                                         <span style="font-weight:600;"><?= $namaK ?></span>
                                     </div>
                                 </td>

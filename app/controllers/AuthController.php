@@ -165,6 +165,14 @@ class AuthController extends Controller {
                         $user['status']
                         ?? 'aktif',
 
+                    'wali_kelas' =>
+                        $user['wali_kelas']
+                        ?? null,
+
+                    'kelas' =>
+                        $user['wali_kelas']
+                        ?? null,
+
                     'login_at' =>
                         date('Y-m-d H:i:s')
                 ];

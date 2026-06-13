@@ -204,7 +204,6 @@ function guruInitials(string $nama): string {
             <div class="topbar-right">
                 <div class="topbar-icon-btn">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">3</span>
                 </div>
                 <div class="topbar-avatar">
                     <?php

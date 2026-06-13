@@ -124,7 +124,6 @@ $bulan = [
             <div class="flex items-center gap-5">
                 <div class="relative cursor-pointer">
                     <i class="fa fa-bell text-gray-400 text-lg"></i>
-                    <span class="notif-dot"></span>
                 </div>
                 <i class="fa fa-comment-dots text-gray-400 text-lg cursor-pointer"></i>
                 <div class="flex items-center gap-3 pl-4" style="border-left:1px solid #e2e8f0;">

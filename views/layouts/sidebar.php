@@ -5,7 +5,6 @@ $currentUrl = trim($_GET['url'] ?? 'auth/loginPage', '/');
 
 function isActive(string $route): string {
     global $currentUrl;
-    
     return ($currentUrl === $route || str_starts_with($currentUrl, $route . '/'))
         ? 'active'
         : '';
@@ -16,10 +15,32 @@ $initials = implode('', array_map(
     fn($w) => strtoupper($w[0]),
     array_slice(explode(' ', $u['nama'] ?? 'User'), 0, 2)
 ));
-$namaUser  = htmlspecialchars($u['nama']         ?? 'Guru');
-$roleUser  = ucfirst($u['role']                  ?? 'guru');
-$kelasUser = htmlspecialchars($u['kelas']         ?? 'XI RPL 1');
-$sekolah   = htmlspecialchars($u['nama_sekolah']  ?? 'Man 2 Banyumas');
+$namaUser = htmlspecialchars($u['nama']         ?? 'Guru');
+$roleUser = ucfirst($u['role']                  ?? 'guru');
+$sekolah  = htmlspecialchars($u['nama_sekolah'] ?? 'Man 2 Banyumas');
+
+// ── Selalu ambil wali_kelas fresh dari DB ──
+$kelasUser = htmlspecialchars($u['wali_kelas'] ?? $u['kelas'] ?? '-');
+
+if (!empty($u['id']) && (int)$u['id'] > 0) {
+    $guruResp = Database::request(
+        'GET',
+        'guru?id=eq.' . urlencode($u['id']) . '&select=wali_kelas&limit=1'
+    );
+    if (is_array($guruResp) && !isset($guruResp['error']) && isset($guruResp[0]['wali_kelas'])) {
+        $waliKelasId = $guruResp[0]['wali_kelas'];
+
+        $kelasResp = Database::request(
+            'GET',
+            'kelas?id=eq.' . urlencode($waliKelasId) . '&select=nama_kelas&limit=1'
+        );
+        if (is_array($kelasResp) && !isset($kelasResp['error']) && isset($kelasResp[0]['nama_kelas'])) {
+            $kelasUser = htmlspecialchars($kelasResp[0]['nama_kelas']);
+            $_SESSION['user']['wali_kelas'] = $waliKelasId;
+            $_SESSION['user']['kelas']      = $kelasResp[0]['nama_kelas'];
+        }
+    }
+}
 ?>
 <aside class="sidebar">
   <div class="sidebar-brand">
@@ -74,7 +95,6 @@ $sekolah   = htmlspecialchars($u['nama_sekolah']  ?? 'Man 2 Banyumas');
       <i data-lucide="activity" style="width:18px;height:18px;"></i>
       Monitoring
     </a>
-
   </nav>
 
   <div class="sidebar-bottom">

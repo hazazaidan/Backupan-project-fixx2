@@ -301,7 +301,6 @@ select.filter-input {
     <div class="topbar-right">
         <div class="topbar-btn">
             <i class="fa fa-bell" style="font-size:14px;"></i>
-            <span class="notif-dot"></span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;padding-left:12px;border-left:1px solid #e2e8f0;">
             <div class="topbar-avatar"><?= $inisial2 ?></div>

@@ -32,7 +32,6 @@ $daftarKelas = $daftarKelas ?? [];
             <div class="topbar-right">
                 <div class="topbar-icon-btn" title="Notifikasi">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">3</span>
                 </div>
                 <div class="topbar-avatar">
                     <?php
