@@ -1,7 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Data dari controller
 $siswa       = $siswa       ?? [];
 $daftarKelas = $daftarKelas ?? [];
 ?>
@@ -144,9 +143,10 @@ $daftarKelas = $daftarKelas ?? [];
                     <?php endforeach; ?>
                 </select>
             </div>
+            <!-- [DIUBAH] Password dihapus, diganti QR Code (opsional) -->
             <div class="form-group">
-                <label class="form-label">Password <span class="req">*</span></label>
-                <input type="password" class="form-control" id="add_password" placeholder="Password login siswa" autocomplete="new-password">
+                <label class="form-label">QR Code <span style="font-size:11px;color:var(--text2);font-weight:400">(opsional)</span></label>
+                <input type="text" class="form-control" id="add_qr" placeholder="Kode QR siswa" autocomplete="off">
             </div>
         </div>
         <div class="modal-footer">
@@ -186,6 +186,11 @@ $daftarKelas = $daftarKelas ?? [];
                     <option value="<?= htmlspecialchars($k) ?>"><?= htmlspecialchars($k) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <!-- [TAMBAH] Field QR Code di modal Edit -->
+            <div class="form-group">
+                <label class="form-label">QR Code <span style="font-size:11px;color:var(--text2);font-weight:400">(opsional)</span></label>
+                <input type="text" class="form-control" id="edit_qr" placeholder="Kode QR siswa" autocomplete="off">
             </div>
         </div>
         <div class="modal-footer">
@@ -289,17 +294,18 @@ $daftarKelas = $daftarKelas ?? [];
 
 <!-- ===================== SCRIPT ===================== -->
 <script>
+// [DIUBAH] Tambah qr_image ke array dataSiswa
 let dataSiswa = <?= json_encode(array_values(array_filter(array_map(fn($s) => [
-    'id'   => $s['id']    ?? '',
-    'nama' => $s['nama']  ?? '-',
-    'nis'  => (string)($s['nis'] ?? ''),
-    'kelas'=> $s['kelas'] ?? '',
+    'id'       => $s['id']       ?? '',
+    'nama'     => $s['nama']     ?? '-',
+    'nis'      => (string)($s['nis'] ?? ''),
+    'kelas'    => $s['kelas']    ?? '',
+    'qr_image' => $s['qr_image'] ?? '',
 ], $siswa), fn($s) => !empty($s['id'])))) ?>;
 
 let currentPage  = 1;
 const perPage    = 8;
 let filteredData = [...dataSiswa];
-
 
 let _hapusId = '';
 
@@ -405,13 +411,14 @@ function resetFilter() {
     filterData();
 }
 
+// [DIUBAH] Hapus validasi password, tambah qr_image
 async function simpanTambah() {
-    const nama     = document.getElementById('add_nama').value.trim();
-    const nis      = document.getElementById('add_nis').value.trim();
-    const kelas    = document.getElementById('add_kelas').value;
-    const password = document.getElementById('add_password').value;
+    const nama  = document.getElementById('add_nama').value.trim();
+    const nis   = document.getElementById('add_nis').value.trim();
+    const kelas = document.getElementById('add_kelas').value;
+    const qr    = document.getElementById('add_qr').value.trim();
 
-    if (!nama||!nis||!kelas||!password) { showToast('Isi semua field wajib','error'); return; }
+    if (!nama || !nis || !kelas) { showToast('Nama, NIS, dan Kelas wajib diisi', 'error'); return; }
 
     const btn = document.getElementById('btnSimpanTambah');
     btn.disabled=true; btn.innerHTML='<i class="bi bi-hourglass-split"></i> Menyimpan...';
@@ -419,19 +426,20 @@ async function simpanTambah() {
     try {
         const res  = await fetch('?url=admin/siswa/store', {
             method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ nama, nisn:nis, kelas, password })
+            body: JSON.stringify({ nama, nisn: nis, kelas, qr_image: qr })
         });
         const json = await res.json();
         if (json.success) {
             closeModal('modalTambah');
-            showToast(json.message,'success');
+            showToast(json.message, 'success');
             setTimeout(()=>location.reload(), 1000);
-        } else { showToast(json.message,'error'); }
-    } catch(e) { showToast('Gagal terhubung ke server','error'); }
+        } else { showToast(json.message, 'error'); }
+    } catch(e) { showToast('Gagal terhubung ke server', 'error'); }
 
     btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg"></i> Simpan';
 }
 
+// [DIUBAH] Tambah isi field qr_image saat buka modal edit
 function openEdit(id) {
     const s = dataSiswa.find(x=>String(x.id)===String(id));
     if (!s) { showToast('Data tidak ditemukan','error'); return; }
@@ -439,16 +447,19 @@ function openEdit(id) {
     document.getElementById('edit_nama').value  = s.nama;
     document.getElementById('edit_nis').value   = s.nis;
     document.getElementById('edit_kelas').value = s.kelas;
+    document.getElementById('edit_qr').value    = s.qr_image || ''; // [TAMBAH]
     openModal('modalEdit');
 }
 
+// [DIUBAH] Tambah qr_image ke payload edit
 async function simpanEdit() {
     const id    = document.getElementById('edit_id').value;
     const nama  = document.getElementById('edit_nama').value.trim();
     const nis   = document.getElementById('edit_nis').value.trim();
     const kelas = document.getElementById('edit_kelas').value;
+    const qr    = document.getElementById('edit_qr').value.trim(); // [TAMBAH]
 
-    if (!nama||!nis||!kelas) { showToast('Isi semua field wajib','error'); return; }
+    if (!nama || !nis || !kelas) { showToast('Isi semua field wajib', 'error'); return; }
 
     const btn = document.getElementById('btnSimpanEdit');
     btn.disabled=true; btn.innerHTML='<i class="bi bi-hourglass-split"></i> Menyimpan...';
@@ -456,19 +467,20 @@ async function simpanEdit() {
     try {
         const res  = await fetch('?url=admin/siswa/update', {
             method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ id, nama, nisn:nis, kelas })
+            body: JSON.stringify({ id, nama, nisn: nis, kelas, qr_image: qr }) // [DIUBAH]
         });
         const json = await res.json();
         if (json.success) {
             closeModal('modalEdit');
-            showToast(json.message,'success');
+            showToast(json.message, 'success');
             setTimeout(()=>location.reload(), 1000);
-        } else { showToast(json.message,'error'); }
-    } catch(e) { showToast('Gagal terhubung ke server','error'); }
+        } else { showToast(json.message, 'error'); }
+    } catch(e) { showToast('Gagal terhubung ke server', 'error'); }
 
     btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg"></i> Update';
 }
 
+// [DIUBAH] Tampilkan qr_image di modal detail
 function openDetail(id) {
     const s = dataSiswa.find(x=>String(x.id)===String(id));
     if (!s) { showToast('Data tidak ditemukan','error'); return; }
@@ -481,10 +493,10 @@ function openDetail(id) {
         <div class="detail-grid">
             <div class="detail-item"><div class="di-label">NIS</div><div class="di-val" style="font-family:monospace">${s.nis||'-'}</div></div>
             <div class="detail-item"><div class="di-label">Kelas</div><div class="di-val">${s.kelas||'-'}</div></div>
+            <div class="detail-item detail-full"><div class="di-label">QR Code</div><div class="di-val" style="font-family:monospace;word-break:break-all">${s.qr_image||'<span style="color:var(--text2);font-weight:400;font-family:Poppins">Belum diatur</span>'}</div></div>
         </div>`;
     openModal('modalDetail');
 }
-
 
 function openHapusBtn(btn) {
     const actualBtn = btn.closest('[data-id]');
@@ -500,7 +512,6 @@ function openHapusBtn(btn) {
     document.getElementById('hapusNama').textContent = s.nama;
     openModal('modalHapus');
 }
-
 
 async function konfirmHapusNow() {
     const btn        = document.getElementById('btnKonfirmHapus');

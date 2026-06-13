@@ -61,10 +61,11 @@ class AdminController
         if ($id === '' || $id === '0') return null;
 
         return [
-            'id'    => $id,
-            'nama'  => trim($row['nama']  ?? '-'),
-            'nis'   => (string) ($row['nis']  ?? ''),
-            'kelas' => trim($row['kelas'] ?? ''),
+            'id'       => $id,
+            'nama'     => trim($row['nama']     ?? '-'),
+            'nis'      => (string) ($row['nis'] ?? ''),
+            'kelas'    => trim($row['kelas']    ?? ''),
+            'qr_image' => trim($row['qr_image'] ?? ''),
         ];
     }
 
@@ -186,7 +187,7 @@ class AdminController
     {
         $this->requireAuth();
 
-        $resp = Database::request('GET', 'students?select=id,nama,nis,kelas&order=kelas.asc,nama.asc');
+        $resp = Database::request('GET', 'students?select=id,nama,nis,kelas,qr_image&order=kelas.asc,nama.asc');
 
         $siswa = [];
         if (!empty($resp) && !isset($resp['error']) && is_array($resp)) {
@@ -215,14 +216,14 @@ class AdminController
         $this->requireAuth();
         header('Content-Type: application/json');
 
-        $body     = json_decode(file_get_contents('php://input'), true) ?? [];
-        $nama     = trim($body['nama']     ?? '');
-        $nis      = trim($body['nisn']     ?? $body['nis'] ?? '');
-        $kelas    = trim($body['kelas']    ?? '');
-        $password = trim($body['password'] ?? '');
+        $body  = json_decode(file_get_contents('php://input'), true) ?? [];
+        $nama  = trim($body['nama']     ?? '');
+        $nis   = trim($body['nisn']     ?? $body['nis'] ?? '');
+        $kelas = trim($body['kelas']    ?? '');
+        $qr    = trim($body['qr_image'] ?? '');
 
-        if (!$nama || !$nis || !$kelas || !$password) {
-            echo json_encode(['success' => false, 'message' => 'Semua field wajib diisi']);
+        if (!$nama || !$nis || !$kelas) {
+            echo json_encode(['success' => false, 'message' => 'Nama, NIS, dan Kelas wajib diisi']);
             exit;
         }
 
@@ -237,12 +238,15 @@ class AdminController
             exit;
         }
 
-        $insert = Database::request('POST', 'students', [
+        $payload = [
             'nama'     => $nama,
             'nis'      => (int) $nis,
             'kelas'    => $kelas,
-            'password' => password_hash($password, PASSWORD_DEFAULT),
-        ]);
+            'password' => null,
+        ];
+        if (!empty($qr)) $payload['qr_image'] = $qr;
+
+        $insert = Database::request('POST', 'students', $payload);
 
         if (!$this->isSuccess($insert)) {
             echo json_encode(['success' => false, 'message' => 'Gagal menyimpan data siswa']);
@@ -253,22 +257,17 @@ class AdminController
         exit;
     }
 
-    // =========================================================
-    //  FIX: updateSiswa — tambah cek NIS duplikat (exclude ID sendiri)
-    //  + strip non-digit dari NIS sebelum validasi
-    //  + tampilkan debug response jika gagal
-    // =========================================================
     public function updateSiswa(): void
     {
         $this->requireAuth();
         header('Content-Type: application/json');
 
         $body  = json_decode(file_get_contents('php://input'), true) ?? [];
-        $id    = trim($body['id']   ?? '');
-        $nama  = trim($body['nama'] ?? '');
-        // FIX 1: strip karakter non-digit dari NIS (misal spasi tersembunyi)
+        $id    = trim($body['id']       ?? '');
+        $nama  = trim($body['nama']     ?? '');
         $nis   = preg_replace('/\D/', '', trim($body['nisn'] ?? $body['nis'] ?? ''));
-        $kelas = trim($body['kelas'] ?? '');
+        $kelas = trim($body['kelas']    ?? '');
+        $qr    = trim($body['qr_image'] ?? '');
 
         if (!$id || !$nama || !$nis || !$kelas) {
             echo json_encode(['success' => false, 'message' => 'Data tidak lengkap']);
@@ -280,20 +279,21 @@ class AdminController
             exit;
         }
 
-        // FIX 2: cek duplikat NIS — exclude ID siswa yang sedang diedit
         $cekNis = Database::request('GET', 'students?nis=eq.' . urlencode($nis) . '&id=neq.' . urlencode($id) . '&select=id&limit=1');
         if (is_array($cekNis) && !isset($cekNis['error']) && count($cekNis) > 0) {
             echo json_encode(['success' => false, 'message' => 'NIS ' . $nis . ' sudah digunakan siswa lain']);
             exit;
         }
 
-        $update = Database::request('PATCH', 'students?id=eq.' . urlencode($id), [
+        $payload = [
             'nama'  => $nama,
             'nis'   => (int) $nis,
             'kelas' => $kelas,
-        ]);
+        ];
+        if (!empty($qr)) $payload['qr_image'] = $qr;
 
-        // FIX 3: tampilkan detail error dari Supabase jika gagal
+        $update = Database::request('PATCH', 'students?id=eq.' . urlencode($id), $payload);
+
         if (!$this->isSuccess($update)) {
             $errMsg = 'Gagal mengupdate data siswa';
             if (isset($update['response']['message'])) {
@@ -334,7 +334,7 @@ class AdminController
 
         Database::request('DELETE', 'kehadiran?siswa_id=eq.' . urlencode($id));
         if ($nis !== null) {
-            Database::request('DELETE', 'reports?student_nis=eq.'       . urlencode($nis));
+            Database::request('DELETE', 'reports?student_nis=eq.'        . urlencode($nis));
             Database::request('DELETE', 'parent_reports?student_nis=eq.' . urlencode($nis));
         }
 
@@ -583,6 +583,7 @@ class AdminController
         ]);
     }
 
+    // [DIUBAH] Tambah strtoupper() pada tingkat
     public function storeKelas(): void
     {
         $this->requireAuth();
@@ -590,7 +591,7 @@ class AdminController
 
         $body      = json_decode(file_get_contents('php://input'), true) ?? [];
         $namaKelas = trim($body['nama_kelas']   ?? '');
-        $tingkat   = trim($body['tingkat']      ?? '');
+        $tingkat   = strtoupper(trim($body['tingkat']      ?? '')); // [DIUBAH]
         $waliKelas = trim($body['wali_kelas']   ?? '');
         $tahun     = trim($body['tahun_ajaran'] ?? date('Y') . '/' . (date('Y') + 1));
         $kapasitas = (int) ($body['kapasitas']  ?? 0);
@@ -630,6 +631,7 @@ class AdminController
         exit;
     }
 
+    // [DIUBAH] Tambah strtoupper() pada tingkat
     public function updateKelas(): void
     {
         $this->requireAuth();
@@ -638,7 +640,7 @@ class AdminController
         $body      = json_decode(file_get_contents('php://input'), true) ?? [];
         $id        = trim($body['id']           ?? '');
         $namaKelas = trim($body['nama_kelas']   ?? '');
-        $tingkat   = trim($body['tingkat']      ?? '');
+        $tingkat   = strtoupper(trim($body['tingkat']      ?? '')); // [DIUBAH]
         $waliKelas = trim($body['wali_kelas']   ?? '');
         $tahun     = trim($body['tahun_ajaran'] ?? '');
         $kapasitas = (int) ($body['kapasitas']  ?? 0);
@@ -650,7 +652,7 @@ class AdminController
 
         $payload = [
             'nama_kelas'   => $namaKelas,
-            'tingkat'      => !empty($tingkat)   ? $tingkat   : null,
+            'tingkat'      => !empty($tingkat) ? $tingkat : null, // [DIUBAH]
             'wali_kelas'   => !empty($waliKelas) ? $waliKelas : null,
             'tahun_ajaran' => $tahun ?: null,
         ];
@@ -744,7 +746,6 @@ class AdminController
     {
         $this->requireAuth();
 
-        // Load config dari file JSON jika ada, fallback ke default
         $configPath = BASE_PATH . '/storage/pengaturan.json';
         $config     = [];
         if (file_exists($configPath)) {
@@ -752,11 +753,10 @@ class AdminController
             if (is_array($decoded)) $config = $decoded;
         }
 
-        // Load hari libur dari Supabase
-        $respLibur  = Database::request('GET', 'hari_libur?order=tanggal.asc');
-        $hariLibur  = (!empty($respLibur) && !isset($respLibur['error']) && is_array($respLibur))
-                      ? $respLibur
-                      : [];
+        $respLibur = Database::request('GET', 'hari_libur?order=tanggal.asc');
+        $hariLibur = (!empty($respLibur) && !isset($respLibur['error']) && is_array($respLibur))
+                     ? $respLibur
+                     : [];
 
         $data = [
             'pageTitle' => 'Pengaturan Sistem',
@@ -850,7 +850,6 @@ class AdminController
             exit;
         }
 
-        // Cek duplikat tanggal
         $cek = Database::request('GET', 'hari_libur?tanggal=eq.' . urlencode($tanggal) . '&select=id&limit=1');
         if (is_array($cek) && !isset($cek['error']) && count($cek) > 0) {
             echo json_encode(['success' => false, 'message' => 'Tanggal ' . $tanggal . ' sudah terdaftar sebagai hari libur']);
@@ -900,7 +899,7 @@ class AdminController
     }
 
     // =========================================================
-    //  PENGATURAN — GET HARI LIBUR (reload list via AJAX)
+    //  PENGATURAN — GET HARI LIBUR
     // =========================================================
 
     public function getLibur(): void
