@@ -17,15 +17,12 @@ class Absensi {
         return !isset($response['error']);
     }
 
-    // ── [BARU] Bulk insert absensi satu sesi (array of rows) ─────────
-    // Setiap row: { siswa_id, tanggal, status, jadwal_id, waktu_masuk }
     public function bulkCreate(array $rows): bool {
         if (empty($rows)) return false;
         $response = Database::request("POST", "kehadiran", $rows);
         return !isset($response['error']);
     }
 
-    // ── [BARU] Cek apakah sudah ada absensi di jadwal & tanggal tsb ──
     public function sudahAbsenJadwal(string $jadwalId, string $tanggal): bool {
         $response = Database::request(
             "GET",
@@ -119,7 +116,6 @@ class Absensi {
         return $summary;
     }
 
-    // ── [BARU] Query rentang tanggal untuk halaman laporan admin ─────
     public function getByRange(string $tglMulai, string $tglAkhir, string $kelas = '', string $status = ''): array {
         $query = "kehadiran?tanggal=gte." . $tglMulai
                . "&tanggal=lte." . $tglAkhir
@@ -144,11 +140,85 @@ class Absensi {
             ];
         }, $response);
 
-        // Filter kelas di PHP (Supabase tidak support filter kolom nested join)
         if (!empty($kelas)) {
             $result = array_values(array_filter($result, fn($r) => $r['kelas'] === $kelas));
         }
 
         return $result;
+    }
+
+    // ── [BARU] Method-method berikut untuk filter data per kelas guru ─────────
+
+    // Hitung total siswa dari array nama kelas yang diampu
+    public function countSiswaByKelas(array $namaKelasAmpu): int {
+        $total = 0;
+        foreach ($namaKelasAmpu as $nk) {
+            $res = Database::request("GET", "students?kelas=eq." . urlencode($nk) . "&select=id");
+            if (!empty($res) && !isset($res['error'])) $total += count($res);
+        }
+        return $total;
+    }
+
+    // Hitung hadir hari ini hanya dari kelas yang diampu
+    public function countHadirByKelas(string $tanggal, array $namaKelasAmpu): int {
+        $res = Database::request("GET",
+            "kehadiran?tanggal=eq." . $tanggal .
+            "&status=in.(Hadir,Terlambat)" .
+            "&select=siswa_id,students(kelas)"
+        );
+        if (empty($res) || isset($res['error'])) return 0;
+        return count(array_filter($res, fn($r) => in_array($r['students']['kelas'] ?? '', $namaKelasAmpu)));
+    }
+
+    // Hitung izin/sakit hari ini hanya dari kelas yang diampu
+    public function countIzinSakitByKelas(string $tanggal, array $namaKelasAmpu): int {
+        $res = Database::request("GET",
+            "kehadiran?tanggal=eq." . $tanggal .
+            "&status=in.(Izin,Sakit)" .
+            "&select=siswa_id,students(kelas)"
+        );
+        if (empty($res) || isset($res['error'])) return 0;
+        return count(array_filter($res, fn($r) => in_array($r['students']['kelas'] ?? '', $namaKelasAmpu)));
+    }
+
+    // Ambil 5 aktivitas terkini hanya dari kelas yang diampu
+    public function getRecentByKelas(array $namaKelasAmpu, int $limit = 5): array {
+        $today = date('Y-m-d');
+        $res   = Database::request("GET",
+            "kehadiran?tanggal=eq." . $today .
+            "&select=*,students(nama,nis,kelas)" .
+            "&order=waktu_masuk.desc&limit=50"
+        );
+        if (empty($res) || isset($res['error'])) return [];
+
+        $filtered = array_filter($res, fn($r) => in_array($r['students']['kelas'] ?? '', $namaKelasAmpu));
+        return array_slice(array_values($filtered), 0, $limit);
+    }
+
+    // Ambil data chart 7 hari hanya dari kelas yang diampu
+    public function getLast7DaysByKelas(array $namaKelasAmpu): array {
+        $from = date('Y-m-d', strtotime('-6 days'));
+        $res  = Database::request("GET",
+            "kehadiran?tanggal=gte." . $from .
+            "&select=tanggal,status,students(kelas)" .
+            "&order=tanggal.asc"
+        );
+        if (empty($res) || isset($res['error'])) return [];
+
+        // Filter hanya kelas yang diampu
+        $res = array_filter($res, fn($r) => in_array($r['students']['kelas'] ?? '', $namaKelasAmpu));
+
+        $grouped = [];
+        foreach ($res as $row) {
+            $tgl = $row['tanggal'];
+            if (!isset($grouped[$tgl])) {
+                $grouped[$tgl] = ['tanggal' => $tgl, 'hadir' => 0, 'izin' => 0, 'alpha' => 0];
+            }
+            $status = strtolower($row['status']);
+            if ($status === 'hadir' || $status === 'terlambat') $grouped[$tgl]['hadir']++;
+            elseif ($status === 'izin' || $status === 'sakit')  $grouped[$tgl]['izin']++;
+            else                                                 $grouped[$tgl]['alpha']++;
+        }
+        return array_values($grouped);
     }
 }

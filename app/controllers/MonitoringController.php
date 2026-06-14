@@ -1,5 +1,7 @@
 <?php
 
+require_once BASE_PATH . '/app/models/Kelas.php'; // [FIX] tambah require Kelas model
+
 class MonitoringController extends Controller {
 
     public function __construct() {
@@ -17,9 +19,13 @@ class MonitoringController extends Controller {
         $today = date('Y-m-d');
         $dari  = date('Y-m-d', strtotime('-29 days'));
 
+        // [FIX] Ambil kelas yang diampu guru ini
+        $guruId        = $user['id'] ?? null;
+        $kelasModel    = new Kelas();
+        $kelasAmpu     = $kelasModel->getByGuru($guruId);
+        $namaKelasAmpu = array_column($kelasAmpu, 'nama_kelas');
+
         // ── Ambil data kehadiran 30 hari terakhir ──────────────────────
-        // FIX: tabel = kehadiran, kolom tanggal + waktu_masuk (bukan 'waktu')
-        // FIX: join ke students (bukan siswa), students join ke kelas via nama kolom kelas
         $kehadiran = Database::request('GET',
             'kehadiran?select=tanggal,waktu_masuk,status,students(nama,nis,kelas)' .
             '&tanggal=gte.' . $dari .
@@ -28,9 +34,20 @@ class MonitoringController extends Controller {
         );
         $kehadiran = (!empty($kehadiran) && !isset($kehadiran['error'])) ? $kehadiran : [];
 
+        // [FIX] Filter kehadiran hanya dari kelas yang diampu
+        $kehadiran = array_values(array_filter($kehadiran, fn($a) =>
+            in_array($a['students']['kelas'] ?? '', $namaKelasAmpu)
+        ));
+
         // ── Total siswa ────────────────────────────────────────────────
-        $siswaAll   = Database::request('GET', 'students?select=id,nama,nis,kelas');
-        $siswaAll   = (!empty($siswaAll) && !isset($siswaAll['error'])) ? $siswaAll : [];
+        // [FIX] Hanya siswa dari kelas yang diampu
+        $siswaAll = [];
+        foreach ($namaKelasAmpu as $nk) {
+            $res = Database::request('GET', 'students?kelas=eq.' . urlencode($nk) . '&select=id,nama,nis,kelas');
+            if (!empty($res) && !isset($res['error'])) {
+                $siswaAll = array_merge($siswaAll, $res);
+            }
+        }
         $totalSiswa = count($siswaAll);
 
         // ── Rekap per hari untuk chart ─────────────────────────────────
@@ -88,6 +105,7 @@ class MonitoringController extends Controller {
         }
 
         // ── Rekap per kelas hari ini ───────────────────────────────────
+        // [FIX] Inisialisasi hanya dari kelas yang diampu
         $rekapKelas = [];
         foreach ($siswaAll as $s) {
             $kls = $s['kelas'] ?? 'Tanpa Kelas';

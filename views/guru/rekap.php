@@ -94,7 +94,7 @@ $warnaList = ['#6366f1','#0ea5e9','#f59e0b','#10b981','#ec4899','#8b5cf6','#ef44
         <p class="nav-section-label">Menu Utama</p>
         <nav>
             <a href="?url=guru/dashboard" class="nav-item"><i class="fa fa-home nav-icon"></i> Dashboard</a>
-            <a href="?url=guru/scan"      class="nav-item"><i class="fa fa-qrcode nav-icon"></i> Scan QR</a>
+            <a href="?url=guru/kelas"      class="nav-item"><i class="fa fa-door-open nav-icon"></i> Kelas</a>
             <a href="?url=guru/riwayat"   class="nav-item"><i class="fa fa-clock-rotate-left nav-icon"></i> Riwayat Absensi</a>
             <a href="?url=guru/rekap"     class="nav-item active"><i class="fa fa-layer-group nav-icon"></i> Rekap Kelas</a>
             <a href="?url=guru/monitoring" class="nav-item"><i class="fa fa-chart-line nav-icon"></i> Monitoring</a>

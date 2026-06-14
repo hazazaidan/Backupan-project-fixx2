@@ -87,7 +87,6 @@ class AbsensiController extends Controller {
 
         $rows = [];
         foreach ($statuses as $siswaId => $status) {
-            // ── PERUBAHAN: ucfirst agar tersimpan "Hadir"/"Izin"/"Alpha" di Supabase ──
             $statusValid = in_array(strtolower($status), ['hadir', 'izin', 'alpha'])
                            ? ucfirst(strtolower($status))
                            : 'Alpha';
@@ -202,9 +201,27 @@ class AbsensiController extends Controller {
         $page    = max(1, (int)($_GET['page'] ?? 1));
         $perPage = 10;
 
-        $data      = $absensiModel->getFiltered($tanggal, $kelas, $status, $page, $perPage);
-        $total     = $absensiModel->countFiltered($tanggal, $kelas, $status);
-        $kelasList = $kelasModel->getAll();
+        // [FIX] Ambil hanya kelas yang diampu guru ini
+        $guruId    = $_SESSION['user']['id'] ?? '';
+        $kelasAmpu = $kelasModel->getByGuru($guruId);
+        $namaKelasAmpu = array_column($kelasAmpu, 'nama_kelas');
+
+        // [FIX] Validasi: jika guru coba filter kelas lain via URL, reset
+        if ($kelas && !in_array($kelas, $namaKelasAmpu)) {
+            $kelas = '';
+        }
+
+        // [FIX] Scope query: jika ada filter kelas pakai itu, kalau tidak pakai semua kelas diampu
+        $kelasQuery = $kelas ?: (count($namaKelasAmpu) === 1 ? $namaKelasAmpu[0] : '');
+
+        $data      = $absensiModel->getFiltered($tanggal, $kelasQuery, $status, $page, $perPage);
+        $total     = $absensiModel->countFiltered($tanggal, $kelasQuery, $status);
+
+        // [FIX] Filter hasil data di PHP untuk memastikan hanya kelas diampu yang tampil
+        $data = array_values(array_filter($data, function($row) use ($namaKelasAmpu) {
+            $kelasRow = $row['students']['kelas'] ?? $row['kelas'] ?? '';
+            return empty($namaKelasAmpu) || in_array($kelasRow, $namaKelasAmpu);
+        }));
 
         $this->view('guru/riwayat', [
             'title'     => 'Riwayat Absensi',
@@ -216,7 +233,7 @@ class AbsensiController extends Controller {
             'tanggal'   => $tanggal,
             'kelas'     => $kelas,
             'status'    => $status,
-            'kelasList' => $kelasList,
+            'kelasList' => $kelasAmpu, // [FIX] hanya kelas diampu, bukan getAll()
         ]);
     }
 
@@ -227,9 +244,29 @@ class AbsensiController extends Controller {
         $kelasModel   = new Kelas();
         $absensiModel = new Absensi();
 
-        $bulan     = $_GET['bulan'] ?? date('Y-m');
-        $kelasList = $kelasModel->getRekapBulanan($bulan);
-        $summary   = $absensiModel->getSummaryBulanan($bulan);
+        $bulan  = $_GET['bulan'] ?? date('Y-m');
+        $guruId = $_SESSION['user']['id'] ?? '';
+
+        // [FIX] Ambil rekap bulanan hanya untuk kelas yang diampu guru ini
+        $kelasAmpu     = $kelasModel->getByGuru($guruId);
+        $namaKelasAmpu = array_column($kelasAmpu, 'nama_kelas');
+
+        // getRekapBulanan sudah return semua kelas — filter di sini
+        $allRekap  = $kelasModel->getRekapBulanan($bulan);
+        $kelasList = array_values(array_filter($allRekap, function($k) use ($namaKelasAmpu) {
+            return in_array($k['nama_kelas'] ?? '', $namaKelasAmpu);
+        }));
+
+        // [FIX] Hitung summary hanya dari kelas yang diampu
+        $summary = ['hadir' => 0, 'terlambat' => 0, 'izin' => 0, 'alpha' => 0, 'total' => 0];
+        foreach ($kelasList as $k) {
+            $summary['hadir']     += $k['hadir']     ?? 0;
+            $summary['terlambat'] += $k['terlambat'] ?? 0;
+            $summary['izin']      += $k['izin']      ?? 0;
+            $summary['alpha']     += $k['alpha']     ?? 0;
+            $summary['total']     += ($k['hadir'] ?? 0) + ($k['terlambat'] ?? 0)
+                                   + ($k['izin']  ?? 0) + ($k['alpha']     ?? 0);
+        }
 
         $this->view('guru/rekap', [
             'title'     => 'Rekap Kelas',
